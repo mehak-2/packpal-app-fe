@@ -22,6 +22,8 @@ interface Invitation {
 
 interface CollaboratorsStepProps {
   tripId?: string;
+  collaborators?: string[];
+  onUpdate?: (field: string, value: unknown) => void;
 }
 
 const CollaboratorsStep = ({ tripId }: CollaboratorsStepProps) => {

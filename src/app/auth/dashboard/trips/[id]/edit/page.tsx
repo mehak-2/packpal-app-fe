@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import {
   useGetTripByIdQuery,
   useUpdateTripMutation,
@@ -32,7 +32,9 @@ interface Trip {
   collaborators: string[];
 }
 
-const EditTripPage = ({ params }: { params: { id: string } }) => {
+const EditTripPage = () => {
+  const params = useParams();
+  const id = params.id as string;
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     destination: "",
@@ -61,7 +63,7 @@ const EditTripPage = ({ params }: { params: { id: string } }) => {
     data: tripData,
     isLoading: tripLoading,
     error,
-  } = useGetTripByIdQuery(params.id);
+  } = useGetTripByIdQuery(id);
   const [updateTrip] = useUpdateTripMutation();
 
   const steps = [
@@ -102,8 +104,8 @@ const EditTripPage = ({ params }: { params: { id: string } }) => {
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
-      await updateTrip({ id: params.id, ...formData }).unwrap();
-      router.push(`/auth/dashboard/trips/${params.id}`);
+      await updateTrip({ id, ...formData }).unwrap();
+      router.push(`/auth/dashboard/trips/${id}`);
     } catch (error) {
       console.error("Failed to update trip:", error);
     } finally {
