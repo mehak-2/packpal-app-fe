@@ -382,7 +382,7 @@ const TripDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => {
                       7-Day Forecast
                     </h3>
                     <div className="space-y-2">
-                      {trip.weather.forecast.slice(0, 7).map((day, index) => (
+                      {trip.weather.forecast?.slice(0, 7).map((day, index) => (
                         <div
                           key={index}
                           className="flex justify-between items-center text-sm"
