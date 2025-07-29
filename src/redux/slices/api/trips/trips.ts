@@ -4,7 +4,7 @@ import { API_CONFIG } from "../../../../config/api";
 export const tripsApi = createApi({
   reducerPath: "tripsApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: `${API_CONFIG.baseUrl}/trips`,
+    baseUrl: API_CONFIG.baseUrl,
     credentials: "include",
     prepareHeaders: (headers) => {
       const token = localStorage.getItem("token");
@@ -14,59 +14,38 @@ export const tripsApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ["Trip"],
   endpoints: (builder) => ({
     getTrips: builder.query({
-      query: () => "",
-      providesTags: ["Trip"],
+      query: () => "/trips",
     }),
     getTripById: builder.query({
-      query: (id) => `/${id}`,
-      providesTags: (result, error, id) => [{ type: "Trip", id }],
+      query: (id) => `/trips/${id}`,
     }),
     createTrip: builder.mutation({
-      query: (tripData) => ({
-        url: "",
+      query: (body) => ({
+        url: "/trips",
         method: "POST",
-        body: tripData,
+        body,
       }),
-      invalidatesTags: ["Trip"],
-    }),
-    updateTrip: builder.mutation({
-      query: ({ id, ...tripData }) => ({
-        url: `/${id}`,
-        method: "PUT",
-        body: tripData,
-      }),
-      invalidatesTags: (result, error, { id }) => [
-        { type: "Trip", id },
-        "Trip",
-      ],
     }),
     deleteTrip: builder.mutation({
       query: (id) => ({
-        url: `/${id}`,
+        url: `/trips/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["Trip"],
     }),
     updatePackingList: builder.mutation({
       query: ({ id, packingList }) => ({
-        url: `/${id}/packing-list`,
+        url: `/trips/${id}/packing-list`,
         method: "PUT",
-        body: { packingList },
+        body: packingList,
       }),
-      invalidatesTags: (result, error, { id }) => [
-        { type: "Trip", id },
-        "Trip",
-      ],
     }),
     regeneratePackingList: builder.mutation({
       query: (id) => ({
-        url: `/${id}/regenerate-packing-list`,
+        url: `/trips/${id}/regenerate-packing-list`,
         method: "POST",
       }),
-      invalidatesTags: (result, error, id) => [{ type: "Trip", id }, "Trip"],
     }),
   }),
 });
@@ -75,7 +54,6 @@ export const {
   useGetTripsQuery,
   useGetTripByIdQuery,
   useCreateTripMutation,
-  useUpdateTripMutation,
   useDeleteTripMutation,
   useUpdatePackingListMutation,
   useRegeneratePackingListMutation,
