@@ -21,7 +21,11 @@ interface Trip {
   }>;
 }
 
-const EditTripSimplePage = ({ params }: { params: { id: string } }) => {
+const EditTripSimplePage = ({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) => {
   const [formData, setFormData] = useState({
     tripName: "",
     destination: "",
@@ -30,14 +34,23 @@ const EditTripSimplePage = ({ params }: { params: { id: string } }) => {
     notes: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [tripId, setTripId] = useState<string>("");
 
   const router = useRouter();
   const {
     data: tripData,
     isLoading: tripLoading,
     error,
-  } = useGetTripByIdQuery(params.id);
+  } = useGetTripByIdQuery(tripId, { skip: !tripId });
   const [updateTrip] = useUpdateTripMutation();
+
+  useEffect(() => {
+    const resolveParams = async () => {
+      const resolvedParams = await params;
+      setTripId(resolvedParams.id);
+    };
+    resolveParams();
+  }, [params]);
 
   useEffect(() => {
     if (tripData?.data) {
@@ -69,7 +82,7 @@ const EditTripSimplePage = ({ params }: { params: { id: string } }) => {
         .map((s) => s.trim());
 
       await updateTrip({
-        id: params.id,
+        id: tripId,
         destination,
         country,
         startDate: formData.startDate,
@@ -79,7 +92,7 @@ const EditTripSimplePage = ({ params }: { params: { id: string } }) => {
           : [],
       }).unwrap();
 
-      router.push(`/auth/dashboard/trips/${params.id}`);
+      router.push(`/auth/dashboard/trips/${tripId}`);
     } catch (error) {
       console.error("Failed to update trip:", error);
     } finally {
@@ -88,7 +101,7 @@ const EditTripSimplePage = ({ params }: { params: { id: string } }) => {
   };
 
   const handleCancel = () => {
-    router.push(`/auth/dashboard/trips/${params.id}`);
+    router.push(`/auth/dashboard/trips/${tripId}`);
   };
 
   if (tripLoading) {

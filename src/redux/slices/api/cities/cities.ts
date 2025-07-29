@@ -6,7 +6,7 @@ export const citiesApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: `${API_CONFIG.baseUrl}/cities`,
     credentials: "include",
-    prepareHeaders: (headers, { getState }) => {
+    prepareHeaders: (headers) => {
       const token = localStorage.getItem("token");
       if (token) {
         headers.set("authorization", `Bearer ${token}`);

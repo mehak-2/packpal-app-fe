@@ -1,5 +1,4 @@
 import { configureStore, combineReducers } from "@reduxjs/toolkit";
-import { setupListeners } from "@reduxjs/toolkit/query";
 import { authApi } from "./slices/api/auth/auth";
 import { tripsApi } from "./slices/api/trips/trips";
 import { destinationsApi } from "./slices/api/destinations/destinations";

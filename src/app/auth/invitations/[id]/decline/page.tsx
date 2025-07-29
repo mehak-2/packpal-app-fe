@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { API_CONFIG } from "../../../../../config/api";
 
@@ -9,58 +9,61 @@ const DeclineInvitationPage = ({
 }: {
   params: Promise<{ id: string }>;
 }) => {
-  const [invitationId, setInvitationId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const router = useRouter();
 
+  const declineInvitation = useCallback(
+    async (id: string) => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setMessage("Please log in to decline this invitation");
+          setIsLoading(false);
+          return;
+        }
+
+        const response = await fetch(
+          `${API_CONFIG.baseUrl}/invitations/${id}/decline`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const data = await response.json();
+
+        if (response.ok) {
+          setMessage(
+            "Invitation declined successfully! Redirecting to dashboard..."
+          );
+          setIsSuccess(true);
+          setTimeout(() => {
+            router.push("/auth/dashboard");
+          }, 2000);
+        } else {
+          setMessage(data.message || "Failed to decline invitation");
+        }
+      } catch (error) {
+        console.error("Error declining invitation:", error);
+        setMessage("Failed to decline invitation");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [router]
+  );
+
   useEffect(() => {
     const resolveParams = async () => {
       const resolvedParams = await params;
-      setInvitationId(resolvedParams.id);
       await declineInvitation(resolvedParams.id);
     };
     resolveParams();
-  }, [params]);
-
-  const declineInvitation = async (id: string) => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setMessage("Please log in to decline this invitation");
-        setIsLoading(false);
-        return;
-      }
-
-      const response = await fetch(
-        `${API_CONFIG.baseUrl}/invitations/${id}/decline`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setMessage("Invitation declined successfully!");
-        setIsSuccess(true);
-        setTimeout(() => {
-          router.push("/auth/dashboard");
-        }, 2000);
-      } else {
-        setMessage(data.message || "Failed to decline invitation");
-      }
-    } catch (error) {
-      console.error("Error declining invitation:", error);
-      setMessage("Failed to decline invitation");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [params, declineInvitation]);
 
   if (isLoading) {
     return (

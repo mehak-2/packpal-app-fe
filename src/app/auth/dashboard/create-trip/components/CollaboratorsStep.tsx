@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { API_CONFIG } from "../../../../../config/api";
 
 interface User {
@@ -21,30 +21,17 @@ interface Invitation {
 }
 
 interface CollaboratorsStepProps {
-  collaborators: string[];
-  onUpdate: (field: string, value: string[]) => void;
   tripId?: string;
 }
 
-const CollaboratorsStep = ({
-  collaborators,
-  onUpdate,
-  tripId,
-}: CollaboratorsStepProps) => {
+const CollaboratorsStep = ({ tripId }: CollaboratorsStepProps) => {
   const [email, setEmail] = useState("");
   const [invitedUsers, setInvitedUsers] = useState<Invitation[]>([]);
   const [availableUsers, setAvailableUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  useEffect(() => {
-    fetchAvailableUsers();
-    if (tripId) {
-      fetchTripInvitations();
-    }
-  }, [tripId]);
-
-  const fetchAvailableUsers = async () => {
+  const fetchAvailableUsers = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(`${API_CONFIG.baseUrl}/users`, {
@@ -60,9 +47,9 @@ const CollaboratorsStep = ({
     } catch (error) {
       console.error("Error fetching users:", error);
     }
-  };
+  }, []);
 
-  const fetchTripInvitations = async () => {
+  const fetchTripInvitations = useCallback(async () => {
     if (!tripId) return;
 
     try {
@@ -83,7 +70,14 @@ const CollaboratorsStep = ({
     } catch (error) {
       console.error("Error fetching trip invitations:", error);
     }
-  };
+  }, [tripId]);
+
+  useEffect(() => {
+    fetchAvailableUsers();
+    if (tripId) {
+      fetchTripInvitations();
+    }
+  }, [fetchAvailableUsers, fetchTripInvitations, tripId]);
 
   const handleSendInvite = async () => {
     if (!email.trim()) return;

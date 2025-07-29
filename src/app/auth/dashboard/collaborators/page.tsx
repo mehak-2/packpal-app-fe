@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { API_CONFIG } from "../../../../config/api";
 
@@ -64,16 +63,7 @@ const CollaboratorsPage = () => {
     "trips"
   );
 
-  const router = useRouter();
-
-  useEffect(() => {
-    fetchTrips();
-    fetchPendingInvitations();
-    fetchSentInvitations();
-    fetchAvailableUsers();
-  }, []);
-
-  const fetchTrips = async () => {
+  const fetchTrips = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(`${API_CONFIG.baseUrl}/trips`, {
@@ -96,9 +86,9 @@ const CollaboratorsPage = () => {
     } catch (error) {
       console.error("Error fetching trips:", error);
     }
-  };
+  }, [selectedTrip]);
 
-  const fetchPendingInvitations = async () => {
+  const fetchPendingInvitations = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
@@ -115,11 +105,11 @@ const CollaboratorsPage = () => {
         setReceivedInvitations(data.data || []);
       }
     } catch (error) {
-      console.error("Error fetching received invitations:", error);
+      console.error("Error fetching pending invitations:", error);
     }
-  };
+  }, []);
 
-  const fetchSentInvitations = async () => {
+  const fetchSentInvitations = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(`${API_CONFIG.baseUrl}/invitations/sent`, {
@@ -135,9 +125,9 @@ const CollaboratorsPage = () => {
     } catch (error) {
       console.error("Error fetching sent invitations:", error);
     }
-  };
+  }, []);
 
-  const fetchAvailableUsers = async () => {
+  const fetchAvailableUsers = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(`${API_CONFIG.baseUrl}/users`, {
@@ -153,7 +143,19 @@ const CollaboratorsPage = () => {
     } catch (error) {
       console.error("Error fetching users:", error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchTrips();
+    fetchPendingInvitations();
+    fetchSentInvitations();
+    fetchAvailableUsers();
+  }, [
+    fetchTrips,
+    fetchPendingInvitations,
+    fetchSentInvitations,
+    fetchAvailableUsers,
+  ]);
 
   const handleSendInvite = async () => {
     if (!email.trim() || !selectedTrip) return;
