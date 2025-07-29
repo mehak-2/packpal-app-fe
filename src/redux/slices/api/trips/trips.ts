@@ -28,6 +28,13 @@ export const tripsApi = createApi({
         body,
       }),
     }),
+    updateTrip: builder.mutation({
+      query: ({ id, body }) => ({
+        url: `/trips/${id}`,
+        method: "PUT",
+        body,
+      }),
+    }),
     deleteTrip: builder.mutation({
       query: (id) => ({
         url: `/trips/${id}`,
@@ -54,6 +61,7 @@ export const {
   useGetTripsQuery,
   useGetTripByIdQuery,
   useCreateTripMutation,
+  useUpdateTripMutation,
   useDeleteTripMutation,
   useUpdatePackingListMutation,
   useRegeneratePackingListMutation,
