@@ -3,12 +3,14 @@ export const ENV_CONFIG = {
     apiBaseUrl: "http://localhost:5000/api",
     serverUrl: "http://localhost:5000",
   },
+
   production: {
     apiBaseUrl:
       process.env.NEXT_PUBLIC_API_BASE_URL ||
-      "https://your-production-api.com/api",
+      "https://packpal-app-be.onrender.com/api",
     serverUrl:
-      process.env.NEXT_PUBLIC_SERVER_URL || "https://your-production-api.com",
+      process.env.NEXT_PUBLIC_SERVER_URL ||
+      "https://packpal-app-be.onrender.com",
   },
 };
 
