@@ -4,7 +4,7 @@ import { API_CONFIG } from "../../../../config/api";
 export const destinationsApi = createApi({
   reducerPath: "destinationsApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: `${API_CONFIG.baseUrl}/destinations`,
+    baseUrl: API_CONFIG.baseUrl,
     credentials: "include",
     prepareHeaders: (headers) => {
       const token = localStorage.getItem("token");
@@ -14,18 +14,26 @@ export const destinationsApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ["Destination"],
   endpoints: (builder) => ({
+    getDestinations: builder.query({
+      query: () => "/destinations",
+    }),
+    getDestinationById: builder.query({
+      query: (id) => `/destinations/${id}`,
+    }),
     getAllCountries: builder.query({
       query: () => "/countries",
-      providesTags: ["Destination"],
     }),
     searchDestinations: builder.query({
-      query: (query) => `/search?q=${encodeURIComponent(query)}`,
-      providesTags: ["Destination"],
+      query: (searchQuery) =>
+        `/countries/search?q=${encodeURIComponent(searchQuery)}`,
     }),
   }),
 });
 
-export const { useGetAllCountriesQuery, useSearchDestinationsQuery } =
-  destinationsApi;
+export const {
+  useGetDestinationsQuery,
+  useGetDestinationByIdQuery,
+  useGetAllCountriesQuery,
+  useSearchDestinationsQuery,
+} = destinationsApi;

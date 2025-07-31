@@ -1,19 +1,26 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { API_CONFIG } from "../../../../config/api";
 
+const baseQuery = fetchBaseQuery({
+  baseUrl: API_CONFIG.baseUrl,
+  credentials: "include",
+});
+
+const authenticatedBaseQuery = fetchBaseQuery({
+  baseUrl: API_CONFIG.baseUrl,
+  credentials: "include",
+  prepareHeaders: (headers) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      headers.set("authorization", `Bearer ${token}`);
+    }
+    return headers;
+  },
+});
+
 export const authApi = createApi({
   reducerPath: "authApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: API_CONFIG.baseUrl,
-    credentials: "include",
-    prepareHeaders: (headers) => {
-      const token = localStorage.getItem("token");
-      if (token) {
-        headers.set("authorization", `Bearer ${token}`);
-      }
-      return headers;
-    },
-  }),
+  baseQuery: baseQuery,
   endpoints: (builder) => ({
     login: builder.mutation({
       query: (body) => ({
@@ -30,17 +37,24 @@ export const authApi = createApi({
       }),
     }),
     logout: builder.mutation({
-      query: () => ({
-        url: "/auth/logout",
-        method: "POST",
-      }),
+      queryFn: async (args, api, extraOptions) => {
+        const result = await authenticatedBaseQuery(
+          { url: "/auth/logout", method: "POST" },
+          api,
+          extraOptions
+        );
+        return result;
+      },
     }),
     completeOnboarding: builder.mutation({
-      query: (body) => ({
-        url: "/auth/complete-onboarding",
-        method: "POST",
-        body,
-      }),
+      queryFn: async (body, api, extraOptions) => {
+        const result = await authenticatedBaseQuery(
+          { url: "/auth/complete-onboarding", method: "POST", body },
+          api,
+          extraOptions
+        );
+        return result;
+      },
     }),
   }),
 });

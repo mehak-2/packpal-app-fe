@@ -3,6 +3,14 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { authApi } from "@/redux/slices/api/auth/auth";
+import MultiDestinationSelector from "@/components/MultiDestinationSelector";
+import { GeoDBCity } from "@/services/geoDbService";
+
+interface Activity {
+  title: string;
+  description: string;
+  icon: string;
+}
 
 const OnboardingPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -10,7 +18,7 @@ const OnboardingPage = () => {
     travelFrequency: string;
     travelStyle: string;
     preferredClimate: string;
-    preferredDestinations: string[];
+    preferredDestinations: GeoDBCity[];
     preferredActivities: string[];
   }>({
     travelFrequency: "",
@@ -21,10 +29,43 @@ const OnboardingPage = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const router = useRouter();
   const [completeOnboarding] = authApi.useCompleteOnboardingMutation();
+
+  const [activities] = useState<Activity[]>([
+    {
+      title: "Sightseeing",
+      description: "Exploring landmarks and cultural sites",
+      icon: "🏛️",
+    },
+    {
+      title: "Adventure",
+      description: "Outdoor activities like hiking, biking, or water sports",
+      icon: "🏔️",
+    },
+    {
+      title: "Relaxation",
+      description: "Relaxing on beaches, spa treatments, or yoga retreats",
+      icon: "🏖️",
+    },
+    {
+      title: "Culinary Experiences",
+      description: "Trying local cuisine, food tours, or cooking classes",
+      icon: "🍽️",
+    },
+    {
+      title: "Entertainment",
+      description: "Attending concerts, festivals, or nightlife events",
+      icon: "🎭",
+    },
+    {
+      title: "Shopping",
+      description: "Shopping for souvenirs, local crafts, or designer goods",
+      icon: "🛍️",
+    },
+  ]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -33,6 +74,7 @@ const OnboardingPage = () => {
       return;
     }
     setIsAuthenticated(true);
+    setIsLoaded(true);
   }, [router]);
 
   const steps = [
@@ -40,6 +82,7 @@ const OnboardingPage = () => {
       id: 1,
       title: "How often do you travel?",
       subtitle: "This helps us understand your packing needs.",
+      icon: "🗓️",
       options: [
         "Once a year",
         "A few times a year",
@@ -54,6 +97,7 @@ const OnboardingPage = () => {
       id: 2,
       title: "What's your travel style?",
       subtitle: "This helps us understand your packing preferences.",
+      icon: "🎒",
       options: ["Business", "Leisure", "Adventure", "Family", "Solo", "Luxury"],
       field: "travelStyle",
     },
@@ -62,6 +106,7 @@ const OnboardingPage = () => {
       title: "Preferred climates & destinations",
       subtitle:
         "Tell us about the climates and destinations you prefer to travel to. This will help us suggest the best packing lists for you.",
+      icon: "🌍",
       field: "climateAndDestinations",
     },
     {
@@ -69,40 +114,8 @@ const OnboardingPage = () => {
       title: "Default Preferences",
       subtitle:
         "Select your preferred activities to customize trip recommendations.",
+      icon: "🎯",
       field: "preferences",
-    },
-  ];
-
-  const destinations = [
-    { name: "San Francisco", location: "San Francisco, California" },
-    { name: "New York", location: "New York, New York" },
-    { name: "Los Angeles", location: "Los Angeles, California" },
-  ];
-
-  const activities = [
-    {
-      title: "Sightseeing",
-      description: "Exploring landmarks and cultural sites",
-    },
-    {
-      title: "Adventure",
-      description: "Outdoor activities like hiking, biking, or water sports",
-    },
-    {
-      title: "Relaxation",
-      description: "Relaxing on beaches, spa treatments, or yoga retreats",
-    },
-    {
-      title: "Culinary Experiences",
-      description: "Trying local cuisine, food tours, or cooking classes",
-    },
-    {
-      title: "Entertainment",
-      description: "Attending concerts, festivals, or nightlife events",
-    },
-    {
-      title: "Shopping",
-      description: "Shopping for souvenirs, local crafts, or designer goods",
     },
   ];
 
@@ -115,8 +128,6 @@ const OnboardingPage = () => {
   const handleComplete = async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      console.log("Token available:", !!token);
       await completeOnboarding({ ...formData }).unwrap();
       router.push("/auth/dashboard");
     } catch (error) {
@@ -126,20 +137,15 @@ const OnboardingPage = () => {
     }
   };
 
-  const updateFormData = (field: string, value: string | string[]) => {
+  const updateFormData = (
+    field: string,
+    value: string | string[] | GeoDBCity[]
+  ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const toggleDestination = (destination: string) => {
-    const current = formData.preferredDestinations;
-    if (current.includes(destination)) {
-      updateFormData(
-        "preferredDestinations",
-        current.filter((d) => d !== destination)
-      );
-    } else {
-      updateFormData("preferredDestinations", [...current, destination]);
-    }
+  const handleDestinationsChange = (destinations: GeoDBCity[]) => {
+    updateFormData("preferredDestinations", destinations);
   };
 
   const toggleActivity = (activity: string) => {
@@ -159,20 +165,21 @@ const OnboardingPage = () => {
   const renderStepContent = () => {
     if (currentStep === 3) {
       return (
-        <div className="space-y-6">
-          <div>
-            <h4 className="text-lg font-bold text-gray-900 mb-3">
+        <div className="space-y-8">
+          <div className="card">
+            <h4 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+              <span className="mr-3 text-2xl">🌡️</span>
               Preferred climates
             </h4>
-            <div className="flex space-x-3">
+            <div className="flex flex-wrap gap-3">
               {["Warm", "Cold", "Both"].map((climate) => (
                 <button
                   key={climate}
                   onClick={() => updateFormData("preferredClimate", climate)}
-                  className={`px-4 py-2 border rounded-lg font-medium transition-colors ${
+                  className={`px-4 py-3 border-2 rounded-xl font-medium transition-all duration-300 ${
                     formData.preferredClimate === climate
-                      ? "border-blue-600 bg-blue-50 text-blue-600"
-                      : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
+                      ? "border-blue-600 bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 shadow-lg transform scale-105"
+                      : "border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:shadow-md"
                   }`}
                 >
                   {climate}
@@ -181,40 +188,17 @@ const OnboardingPage = () => {
             </div>
           </div>
 
-          <div>
-            <h4 className="text-lg font-bold text-gray-900 mb-3">
+          <div className="card">
+            <h4 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+              <span className="mr-3 text-2xl">📍</span>
               Preferred destinations
             </h4>
-            <div className="mb-4">
-              <input
-                type="text"
-                placeholder="Search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <p className="text-xs text-gray-500 mt-1">for destinations</p>
-            </div>
-
-            <div className="space-y-2">
-              {destinations.map((dest) => (
-                <div
-                  key={dest.name}
-                  onClick={() => toggleDestination(dest.name)}
-                  className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
-                    formData.preferredDestinations.includes(dest.name)
-                      ? "border-blue-600 bg-blue-50"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  <div className="w-4 h-4 mr-3 text-gray-400">📍</div>
-                  <div>
-                    <div className="font-medium text-gray-900">{dest.name}</div>
-                    <div className="text-sm text-gray-600">{dest.location}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <MultiDestinationSelector
+              selectedDestinations={formData.preferredDestinations}
+              onDestinationsChange={handleDestinationsChange}
+              placeholder="Search and select your preferred destinations..."
+              maxSelections={8}
+            />
           </div>
         </div>
       );
@@ -226,28 +210,35 @@ const OnboardingPage = () => {
           {activities.map((activity) => (
             <div
               key={activity.title}
-              className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+              className="card hover:shadow-xl transition-all duration-300"
             >
-              <div className="flex-1">
-                <h4 className="font-bold text-gray-900">{activity.title}</h4>
-                <p className="text-sm text-gray-600">{activity.description}</p>
-              </div>
-              <button
-                onClick={() => toggleActivity(activity.title)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  formData.preferredActivities.includes(activity.title)
-                    ? "bg-blue-600"
-                    : "bg-gray-200"
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+              <div className="flex items-center justify-between">
+                <div className="flex items-center flex-1">
+                  <div className="text-3xl mr-4">{activity.icon}</div>
+                  <div>
+                    <h4 className="text-lg font-bold text-gray-800">
+                      {activity.title}
+                    </h4>
+                    <p className="text-gray-600">{activity.description}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => toggleActivity(activity.title)}
+                  className={`relative inline-flex h-8 w-14 items-center rounded-full transition-all duration-300 ${
                     formData.preferredActivities.includes(activity.title)
-                      ? "translate-x-6"
-                      : "translate-x-1"
+                      ? "bg-gradient-to-r from-blue-600 to-green-600"
+                      : "bg-gray-200"
                   }`}
-                />
-              </button>
+                >
+                  <span
+                    className={`inline-block h-6 w-6 transform rounded-full bg-white transition-all duration-300 shadow-md ${
+                      formData.preferredActivities.includes(activity.title)
+                        ? "translate-x-7"
+                        : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -255,26 +246,30 @@ const OnboardingPage = () => {
     }
 
     return (
-      <div className="space-y-3">
+      <div className="space-y-4">
         {currentStepData.options?.map((option) => (
           <label
             key={option}
-            className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg cursor-pointer hover:border-gray-300 transition-colors"
+            className="card cursor-pointer hover:shadow-xl transition-all duration-300 group"
           >
-            <span className="text-gray-900">{option}</span>
-            <input
-              type="radio"
-              name={currentStepData.field}
-              value={option}
-              checked={
-                formData[currentStepData.field as keyof typeof formData] ===
-                option
-              }
-              onChange={(e) =>
-                updateFormData(currentStepData.field, e.target.value)
-              }
-              className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-            />
+            <div className="flex items-center justify-between">
+              <span className="text-lg text-gray-800 font-medium">
+                {option}
+              </span>
+              <input
+                type="radio"
+                name={currentStepData.field}
+                value={option}
+                checked={
+                  formData[currentStepData.field as keyof typeof formData] ===
+                  option
+                }
+                onChange={(e) =>
+                  updateFormData(currentStepData.field, e.target.value)
+                }
+                className="w-5 h-5 text-blue-600 focus:ring-blue-500"
+              />
+            </div>
           </label>
         ))}
       </div>
@@ -295,44 +290,107 @@ const OnboardingPage = () => {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl">Loading...</div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center">
+        <div className="text-xl font-semibold text-gray-700">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="space-y-6">
-          <h3 className="text-2xl font-bold text-gray-900 text-center">
-            {currentStepData.title}
-          </h3>
-          <p className="text-sm text-gray-600 text-center">
-            {currentStepData.subtitle}
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 relative">
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-green-600/10 pointer-events-none"></div>
 
-          {renderStepContent()}
-        </div>
+      <div className="relative z-10 min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-2xl mx-auto space-y-8">
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center space-x-2 mb-6">
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-green-600 rounded-xl flex items-center justify-center animate-pulse-slow">
+                <span className="text-white font-bold text-2xl">P</span>
+              </div>
+              <span className="text-3xl font-bold gradient-text">PackPal</span>
+            </div>
 
-        <div className="flex justify-center">
-          {currentStep < steps.length ? (
-            <button
-              onClick={handleNext}
-              disabled={!canProceed()}
-              className="px-8 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            <div className="mb-8">
+              <div className="flex justify-center space-x-2 mb-4">
+                {steps.map((step, index) => (
+                  <div key={step.id} className="flex items-center">
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300 ${
+                        currentStep > step.id
+                          ? "bg-gradient-to-r from-blue-600 to-green-600 text-white"
+                          : currentStep === step.id
+                          ? "bg-blue-600 text-white shadow-lg"
+                          : "bg-gray-200 text-gray-600"
+                      }`}
+                    >
+                      {currentStep > step.id ? "✓" : step.id}
+                    </div>
+                    {index < steps.length - 1 && (
+                      <div
+                        className={`w-16 h-1 mx-2 transition-all duration-300 ${
+                          currentStep > step.id
+                            ? "bg-gradient-to-r from-blue-600 to-green-600"
+                            : "bg-gray-200"
+                        }`}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div
+              className={`space-y-6 ${
+                isLoaded ? "animate-fade-in-up" : "opacity-0"
+              }`}
             >
-              Next
-            </button>
-          ) : (
-            <button
-              onClick={handleComplete}
-              disabled={isLoading || !canProceed()}
-              className="px-8 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {isLoading ? "Completing..." : "Save Preferences"}
-            </button>
-          )}
+              <div className="flex items-center justify-center mb-4">
+                <div className="text-4xl mr-4">{currentStepData.icon}</div>
+                <h2 className="text-3xl font-bold text-gray-800">
+                  {currentStepData.title}
+                </h2>
+              </div>
+              <p className="text-lg text-gray-600 max-w-md mx-auto">
+                {currentStepData.subtitle}
+              </p>
+            </div>
+          </div>
+
+          <div
+            className={`w-full ${
+              isLoaded ? "animate-fade-in-up" : "opacity-0"
+            }`}
+            style={{ animationDelay: "0.2s" }}
+          >
+            {renderStepContent()}
+          </div>
+
+          <div className="flex justify-center pt-8">
+            {currentStep < steps.length ? (
+              <button
+                onClick={handleNext}
+                disabled={!canProceed()}
+                className="btn-primary text-lg px-10 py-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              >
+                Continue
+              </button>
+            ) : (
+              <button
+                onClick={handleComplete}
+                disabled={isLoading || !canProceed()}
+                className="btn-primary text-lg px-10 py-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              >
+                {isLoading ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Completing...
+                  </div>
+                ) : (
+                  "Complete Setup"
+                )}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

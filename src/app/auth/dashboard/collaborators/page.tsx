@@ -102,6 +102,7 @@ const CollaboratorsPage = () => {
 
       if (response.ok) {
         const data = await response.json();
+        console.log("Pending invitations data:", data);
         setReceivedInvitations(data.data || []);
       }
     } catch (error) {
@@ -120,6 +121,7 @@ const CollaboratorsPage = () => {
 
       if (response.ok) {
         const data = await response.json();
+        console.log("Sent invitations data:", data);
         setSentInvitations(data.data || []);
       }
     } catch (error) {
@@ -278,6 +280,7 @@ const CollaboratorsPage = () => {
   };
 
   const getInitials = (name: string) => {
+    if (!name) return "?";
     return name
       .split(" ")
       .map((n) => n[0])
@@ -289,15 +292,15 @@ const CollaboratorsPage = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
-        return "text-yellow-600 bg-yellow-100";
+        return "text-yellow-700 bg-gradient-to-r from-yellow-100 to-orange-100 border-yellow-200";
       case "accepted":
-        return "text-green-600 bg-green-100";
+        return "text-green-700 bg-gradient-to-r from-green-100 to-emerald-100 border-green-200";
       case "declined":
-        return "text-red-600 bg-red-100";
+        return "text-red-700 bg-gradient-to-r from-red-100 to-pink-100 border-red-200";
       case "expired":
-        return "text-gray-600 bg-gray-100";
+        return "text-gray-700 bg-gradient-to-r from-gray-100 to-slate-100 border-gray-200";
       default:
-        return "text-gray-600 bg-gray-100";
+        return "text-gray-700 bg-gradient-to-r from-gray-100 to-slate-100 border-gray-200";
     }
   };
 
@@ -319,245 +322,181 @@ const CollaboratorsPage = () => {
   const selectedTripData = trips.find((trip) => trip._id === selectedTrip);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Collaborators
-              </h1>
-              <p className="mt-2 text-gray-600">
-                Manage trip collaborators and invitations
-              </p>
-            </div>
-            <Link
-              href="/auth/dashboard"
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-            >
-              Back to Dashboard
-            </Link>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-green-600/5"></div>
 
-        {message && (
-          <div
-            className={`mb-6 p-4 rounded-lg ${
-              message.includes("successfully")
-                ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
-            }`}
-          >
-            {message}
-          </div>
-        )}
-
-        <div className="bg-white shadow rounded-lg">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8 px-6">
-              <button
-                onClick={() => setActiveTab("trips")}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === "trips"
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                My Trips
-              </button>
-              <button
-                onClick={() => setActiveTab("received")}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === "received"
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                Received Invitations ({receivedInvitations.length})
-              </button>
-              <button
-                onClick={() => setActiveTab("sent")}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === "sent"
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                Sent Invitations ({sentInvitations.length})
-              </button>
-            </nav>
-          </div>
-
-          <div className="p-6">
-            {activeTab === "trips" ? (
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">
-                    Invite Collaborators to Trip
-                  </h3>
-
-                  {trips.length === 0 ? (
-                    <div className="text-center py-8">
-                      <p className="text-gray-500">
-                        No trips found. Create a trip first!
-                      </p>
-                      <Link
-                        href="/auth/dashboard/create-trip"
-                        className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                      >
-                        Create Trip
-                      </Link>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Select Trip
-                        </label>
-                        <select
-                          value={selectedTrip}
-                          onChange={(e) => setSelectedTrip(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                          {trips.map((trip) => (
-                            <option key={trip._id} value={trip._id}>
-                              {trip.destination}, {trip.country} (
-                              {new Date(trip.startDate).toLocaleDateString()} -{" "}
-                              {new Date(trip.endDate).toLocaleDateString()})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {selectedTripData && (
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                          <h4 className="font-medium text-gray-900 mb-2">
-                            Selected Trip:
-                          </h4>
-                          <p className="text-gray-600">
-                            {selectedTripData.destination},{" "}
-                            {selectedTripData.country}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {new Date(
-                              selectedTripData.startDate
-                            ).toLocaleDateString()}{" "}
-                            -{" "}
-                            {new Date(
-                              selectedTripData.endDate
-                            ).toLocaleDateString()}
-                          </p>
-                          {selectedTripData.collaborators.length > 0 && (
-                            <div className="mt-2">
-                              <p className="text-sm text-gray-600">
-                                Current collaborators:
-                              </p>
-                              <div className="flex flex-wrap gap-2 mt-1">
-                                {selectedTripData.collaborators.map(
-                                  (collaborator) => (
-                                    <span
-                                      key={collaborator._id}
-                                      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                                    >
-                                      {collaborator.name}
-                                    </span>
-                                  )
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      <div className="flex space-x-3">
-                        <input
-                          type="email"
-                          placeholder="Enter email address"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          onKeyPress={(e) =>
-                            e.key === "Enter" && handleSendInvite()
-                          }
-                        />
-                        <button
-                          onClick={handleSendInvite}
-                          disabled={isLoading || !email.trim() || !selectedTrip}
-                          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                          {isLoading ? "Sending..." : "Send Invite"}
-                        </button>
-                      </div>
-
-                      {availableUsers.length > 0 && (
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-900 mb-3">
-                            Quick Invite
-                          </h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {availableUsers
-                              .filter(
-                                (user) =>
-                                  !selectedTripData?.collaborators.find(
-                                    (c) => c._id === user._id
-                                  )
-                              )
-                              .slice(0, 6)
-                              .map((user) => (
-                                <div
-                                  key={user._id}
-                                  className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors"
-                                >
-                                  <div className="flex items-center space-x-3">
-                                    <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-white font-medium text-xs">
-                                      {user.avatar ? (
-                                        <img
-                                          src={user.avatar}
-                                          alt={user.name}
-                                          className="w-8 h-8 rounded-full object-cover"
-                                        />
-                                      ) : (
-                                        getInitials(user.name)
-                                      )}
-                                    </div>
-                                    <div>
-                                      <p className="text-sm font-medium text-gray-900">
-                                        {user.name}
-                                      </p>
-                                      <p className="text-xs text-gray-500">
-                                        {user.email}
-                                      </p>
-                                    </div>
-                                  </div>
-                                  <button
-                                    onClick={() => {
-                                      setEmail(user.email);
-                                      handleSendInvite();
-                                    }}
-                                    className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
-                                  >
-                                    Invite
-                                  </button>
-                                </div>
-                              ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+      <div className="relative z-10">
+        <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-6 py-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-4">
+                <Link
+                  href="/auth/dashboard"
+                  className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-green-600 rounded-xl flex items-center justify-center">
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 19l-7-7 7-7"
+                      />
+                    </svg>
+                  </div>
+                  <span className="text-2xl font-bold gradient-text">
+                    PackPal
+                  </span>
+                </Link>
               </div>
-            ) : activeTab === "received" ? (
-              <div className="space-y-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  Received Invitations
-                </h3>
+              <div className="flex items-center space-x-3">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  Collaborators
+                </h1>
+              </div>
+            </div>
+          </div>
+        </nav>
 
-                {receivedInvitations.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="text-gray-500">
+        <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-3">
+              Manage Collaborators
+            </h2>
+            <p className="text-lg text-gray-600">
+              Invite friends and family to join your trips and collaborate on
+              packing lists
+            </p>
+          </div>
+
+          {message && (
+            <div
+              className={`mb-6 p-4 rounded-xl border ${
+                message.includes("successfully")
+                  ? "bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border-green-200"
+                  : "bg-gradient-to-r from-red-50 to-pink-50 text-red-700 border-red-200"
+              }`}
+            >
+              <div className="flex items-center">
+                <svg
+                  className={`w-5 h-5 mr-2 ${
+                    message.includes("successfully")
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d={
+                      message.includes("successfully")
+                        ? "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        : "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                    }
+                  />
+                </svg>
+                {message}
+              </div>
+            </div>
+          )}
+
+          <div className="bg-white/70 backdrop-blur-sm border border-white/20 rounded-2xl shadow-xl">
+            <div className="border-b border-gray-200/50">
+              <nav className="flex space-x-8 px-6">
+                <button
+                  onClick={() => setActiveTab("trips")}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200 ${
+                    activeTab === "trips"
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="flex items-center space-x-2">
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3"
+                      />
+                    </svg>
+                    <span>My Trips</span>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveTab("received")}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200 ${
+                    activeTab === "received"
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="flex items-center space-x-2">
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                      />
+                    </svg>
+                    <span>Received ({receivedInvitations.length})</span>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveTab("sent")}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200 ${
+                    activeTab === "sent"
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="flex items-center space-x-2">
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                      />
+                    </svg>
+                    <span>Sent ({sentInvitations.length})</span>
+                  </div>
+                </button>
+              </nav>
+            </div>
+
+            <div className="p-8">
+              {activeTab === "trips" ? (
+                <div className="space-y-8">
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
                       <svg
-                        className="mx-auto h-12 w-12 text-gray-400 mb-4"
+                        className="w-6 h-6 mr-3 text-blue-600"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -566,169 +505,431 @@ const CollaboratorsPage = () => {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={2}
-                          d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                          d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
                         />
                       </svg>
-                      <p className="text-sm">No received invitations</p>
-                      <p className="text-xs text-gray-400 mt-1">
+                      Invite Collaborators
+                    </h3>
+
+                    {trips.length === 0 ? (
+                      <div className="text-center py-16">
+                        <div className="w-24 h-24 bg-gradient-to-r from-blue-100 to-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                          <svg
+                            className="w-12 h-12 text-blue-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={1.5}
+                              d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3"
+                            />
+                          </svg>
+                        </div>
+                        <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                          No trips found
+                        </h3>
+                        <p className="text-gray-600 mb-8 text-lg">
+                          Create a trip first to start inviting collaborators!
+                        </p>
+                        <Link
+                          href="/auth/dashboard/create-trip"
+                          className="px-8 py-4 bg-gradient-to-r from-blue-600 to-green-600 text-white rounded-xl hover:from-blue-700 hover:to-green-700 transition-all duration-200 shadow-lg text-lg font-semibold"
+                        >
+                          Create Trip
+                        </Link>
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        <div className="bg-white/50 backdrop-blur-sm border border-white/20 rounded-xl p-6">
+                          <label className="block text-sm font-semibold text-gray-700 mb-3">
+                            Select Trip
+                          </label>
+                          <select
+                            value={selectedTrip}
+                            onChange={(e) => setSelectedTrip(e.target.value)}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80 backdrop-blur-sm"
+                          >
+                            {trips.map((trip) => (
+                              <option key={trip._id} value={trip._id}>
+                                {trip.destination}, {trip.country} (
+                                {new Date(trip.startDate).toLocaleDateString()}{" "}
+                                - {new Date(trip.endDate).toLocaleDateString()})
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {selectedTripData && (
+                          <div className="bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-xl p-6">
+                            <h4 className="font-bold text-gray-900 mb-3 flex items-center">
+                              <svg
+                                className="w-5 h-5 mr-2 text-blue-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3"
+                                />
+                              </svg>
+                              Selected Trip
+                            </h4>
+                            <p className="text-lg font-medium text-gray-900 mb-1">
+                              {selectedTripData.destination},{" "}
+                              {selectedTripData.country}
+                            </p>
+                            <p className="text-gray-600 mb-4">
+                              {new Date(
+                                selectedTripData.startDate
+                              ).toLocaleDateString()}{" "}
+                              -{" "}
+                              {new Date(
+                                selectedTripData.endDate
+                              ).toLocaleDateString()}
+                            </p>
+                            {selectedTripData.collaborators.length > 0 && (
+                              <div>
+                                <p className="text-sm font-semibold text-gray-700 mb-2">
+                                  Current collaborators:
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                  {selectedTripData.collaborators.map(
+                                    (collaborator) => (
+                                      <span
+                                        key={collaborator._id}
+                                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-blue-100 to-green-100 text-blue-800 border border-blue-200"
+                                      >
+                                        {collaborator.name}
+                                      </span>
+                                    )
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="bg-white/50 backdrop-blur-sm border border-white/20 rounded-xl p-6">
+                          <div className="flex space-x-4">
+                            <input
+                              type="email"
+                              placeholder="Enter email address"
+                              value={email}
+                              onChange={(e) => setEmail(e.target.value)}
+                              className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80 backdrop-blur-sm"
+                              onKeyPress={(e) =>
+                                e.key === "Enter" && handleSendInvite()
+                              }
+                            />
+                            <button
+                              onClick={handleSendInvite}
+                              disabled={
+                                isLoading || !email.trim() || !selectedTrip
+                              }
+                              className="px-8 py-3 bg-gradient-to-r from-blue-600 to-green-600 text-white rounded-xl hover:from-blue-700 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg font-semibold"
+                            >
+                              {isLoading ? "Sending..." : "Send Invite"}
+                            </button>
+                          </div>
+                        </div>
+
+                        {availableUsers.length > 0 && (
+                          <div className="bg-white/50 backdrop-blur-sm border border-white/20 rounded-xl p-6">
+                            <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                              <svg
+                                className="w-5 h-5 mr-2 text-blue-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
+                                />
+                              </svg>
+                              Quick Invite
+                            </h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                              {availableUsers
+                                .filter(
+                                  (user) =>
+                                    !selectedTripData?.collaborators.find(
+                                      (c) => c._id === user._id
+                                    )
+                                )
+                                .slice(0, 6)
+                                .map((user) => (
+                                  <div
+                                    key={user._id}
+                                    className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-blue-50 border border-gray-200 rounded-xl hover:border-blue-300 transition-all duration-200 hover:shadow-md"
+                                  >
+                                    <div className="flex items-center space-x-3">
+                                      <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-green-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
+                                        {user.avatar ? (
+                                          <img
+                                            src={user.avatar}
+                                            alt={user.name}
+                                            className="w-10 h-10 rounded-full object-cover"
+                                          />
+                                        ) : (
+                                          getInitials(user.name)
+                                        )}
+                                      </div>
+                                      <div>
+                                        <p className="text-sm font-semibold text-gray-900">
+                                          {user.name}
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                          {user.email}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <button
+                                      onClick={() => {
+                                        setEmail(user.email);
+                                        handleSendInvite();
+                                      }}
+                                      className="text-sm text-blue-600 hover:text-blue-800 transition-colors font-medium"
+                                    >
+                                      Invite
+                                    </button>
+                                  </div>
+                                ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : activeTab === "received" ? (
+                <div className="space-y-6">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <svg
+                      className="w-6 h-6 mr-3 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                      />
+                    </svg>
+                    Received Invitations
+                  </h3>
+
+                  {receivedInvitations.length === 0 ? (
+                    <div className="text-center py-16">
+                      <div className="w-24 h-24 bg-gradient-to-r from-blue-100 to-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg
+                          className="w-12 h-12 text-blue-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                          />
+                        </svg>
+                      </div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                        No invitations yet
+                      </h3>
+                      <p className="text-gray-600 mb-8 text-lg">
                         You&apos;ll see invitations here when they&apos;re sent
                         to you
                       </p>
                     </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {receivedInvitations.map((invitation: Invitation) => (
-                      <div
-                        key={invitation._id}
-                        className="border border-gray-200 rounded-lg p-4"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-medium">
-                              {getInitials(invitation.inviterId.name)}
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-gray-900">
-                                {invitation.inviterId.name} invited you to join
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                {invitation.tripId.destination},{" "}
-                                {invitation.tripId.country}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {new Date(
-                                  invitation.tripId.startDate
-                                ).toLocaleDateString()}{" "}
-                                -{" "}
-                                {new Date(
-                                  invitation.tripId.endDate
-                                ).toLocaleDateString()}
-                              </p>
-                              <span
-                                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-1 ${getStatusColor(
-                                  invitation.status
-                                )}`}
-                              >
-                                {getStatusText(invitation.status)}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            {invitation.status === "pending" && (
-                              <>
-                                <button
-                                  onClick={() =>
-                                    handleAcceptInvitation(invitation._id)
-                                  }
-                                  className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+                  ) : (
+                    <div className="space-y-4">
+                      {receivedInvitations.map((invitation: Invitation) => (
+                        <div
+                          key={invitation._id}
+                          className="bg-white/50 backdrop-blur-sm border border-white/20 rounded-xl p-6 hover:shadow-lg transition-all duration-200"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                              <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-green-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                {getInitials(
+                                  invitation.inviterId?.name || "Unknown User"
+                                )}
+                              </div>
+                              <div>
+                                <p className="text-lg font-semibold text-gray-900">
+                                  {invitation.inviterId?.name || "Unknown User"}{" "}
+                                  invited you to join
+                                </p>
+                                <p className="text-gray-600 font-medium">
+                                  {invitation.tripId.destination},{" "}
+                                  {invitation.tripId.country}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  {new Date(
+                                    invitation.tripId.startDate
+                                  ).toLocaleDateString()}{" "}
+                                  -{" "}
+                                  {new Date(
+                                    invitation.tripId.endDate
+                                  ).toLocaleDateString()}
+                                </p>
+                                <span
+                                  className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium mt-2 border ${getStatusColor(
+                                    invitation.status
+                                  )}`}
                                 >
-                                  Accept
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    handleDeclineInvitation(invitation._id)
-                                  }
-                                  className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
-                                >
-                                  Decline
-                                </button>
-                              </>
-                            )}
+                                  {getStatusText(invitation.status)}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                              {invitation.status === "pending" && (
+                                <>
+                                  <button
+                                    onClick={() =>
+                                      handleAcceptInvitation(invitation._id)
+                                    }
+                                    className="px-6 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-lg font-semibold"
+                                  >
+                                    Accept
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      handleDeclineInvitation(invitation._id)
+                                    }
+                                    className="px-6 py-2 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-xl hover:from-red-700 hover:to-pink-700 transition-all duration-200 shadow-lg font-semibold"
+                                  >
+                                    Decline
+                                  </button>
+                                </>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : activeTab === "sent" ? (
-              <div className="space-y-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  Sent Invitations
-                </h3>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === "sent" ? (
+                <div className="space-y-6">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <svg
+                      className="w-6 h-6 mr-3 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                      />
+                    </svg>
+                    Sent Invitations
+                  </h3>
 
-                {sentInvitations.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="text-gray-500">
-                      <svg
-                        className="mx-auto h-12 w-12 text-gray-400 mb-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                        />
-                      </svg>
-                      <p className="text-sm">No sent invitations</p>
-                      <p className="text-xs text-gray-400 mt-1">
+                  {sentInvitations.length === 0 ? (
+                    <div className="text-center py-16">
+                      <div className="w-24 h-24 bg-gradient-to-r from-blue-100 to-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg
+                          className="w-12 h-12 text-blue-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                          />
+                        </svg>
+                      </div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                        No sent invitations
+                      </h3>
+                      <p className="text-gray-600 mb-8 text-lg">
                         You haven&apos;t sent any invitations yet
                       </p>
                     </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {sentInvitations.map((invitation: Invitation) => (
-                      <div
-                        key={invitation._id}
-                        className="border border-gray-200 rounded-lg p-4"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center text-white font-medium">
-                              {getInitials(invitation.inviteeId.name)}
+                  ) : (
+                    <div className="space-y-4">
+                      {sentInvitations.map((invitation: Invitation) => (
+                        <div
+                          key={invitation._id}
+                          className="bg-white/50 backdrop-blur-sm border border-white/20 rounded-xl p-6 hover:shadow-lg transition-all duration-200"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                              <div className="w-12 h-12 bg-gradient-to-r from-green-600 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                {getInitials(
+                                  invitation.inviteeId?.name || "Unknown User"
+                                )}
+                              </div>
+                              <div>
+                                <p className="text-lg font-semibold text-gray-900">
+                                  You invited{" "}
+                                  {invitation.inviteeId?.name || "Unknown User"}{" "}
+                                  to join
+                                </p>
+                                <p className="text-gray-600 font-medium">
+                                  {invitation.tripId.destination},{" "}
+                                  {invitation.tripId.country}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  {new Date(
+                                    invitation.tripId.startDate
+                                  ).toLocaleDateString()}{" "}
+                                  -{" "}
+                                  {new Date(
+                                    invitation.tripId.endDate
+                                  ).toLocaleDateString()}
+                                </p>
+                                <span
+                                  className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium mt-2 border ${getStatusColor(
+                                    invitation.status
+                                  )}`}
+                                >
+                                  {getStatusText(invitation.status)}
+                                </span>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-sm font-medium text-gray-900">
-                                You invited {invitation.inviteeId.name} to join
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                {invitation.tripId.destination},{" "}
-                                {invitation.tripId.country}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {new Date(
-                                  invitation.tripId.startDate
-                                ).toLocaleDateString()}{" "}
-                                -{" "}
-                                {new Date(
-                                  invitation.tripId.endDate
-                                ).toLocaleDateString()}
-                              </p>
-                              <span
-                                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-1 ${getStatusColor(
-                                  invitation.status
-                                )}`}
-                              >
-                                {getStatusText(invitation.status)}
-                              </span>
+                            <div className="flex items-center space-x-3">
+                              {invitation.status === "pending" && (
+                                <button
+                                  onClick={() =>
+                                    handleResendInvite(invitation._id)
+                                  }
+                                  className="px-6 py-2 bg-gradient-to-r from-blue-600 to-green-600 text-white rounded-xl hover:from-blue-700 hover:to-green-700 transition-all duration-200 shadow-lg font-semibold"
+                                >
+                                  Resend
+                                </button>
+                              )}
                             </div>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            {invitation.status === "pending" && (
-                              <button
-                                onClick={() =>
-                                  handleResendInvite(invitation._id)
-                                }
-                                className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
-                              >
-                                Resend
-                              </button>
-                            )}
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : null}
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : null}
+            </div>
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { API_CONFIG } from "../../../../../config/api";
+import { useDeclineInvitationMutation } from "@/redux/slices/api/collaboration/collaboration";
 
 const DeclineInvitationPage = ({
   params,
@@ -13,8 +13,9 @@ const DeclineInvitationPage = ({
   const [message, setMessage] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const router = useRouter();
+  const [declineInvitation] = useDeclineInvitationMutation();
 
-  const declineInvitation = useCallback(
+  const handleDeclineInvitation = useCallback(
     async (id: string) => {
       try {
         const token = localStorage.getItem("token");
@@ -24,46 +25,42 @@ const DeclineInvitationPage = ({
           return;
         }
 
-        const response = await fetch(
-          `${API_CONFIG.baseUrl}/invitations/${id}/decline`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+        await declineInvitation(id).unwrap();
+        setMessage(
+          "Invitation declined successfully! Redirecting to dashboard..."
         );
-
-        const data = await response.json();
-
-        if (response.ok) {
-          setMessage(
-            "Invitation declined successfully! Redirecting to dashboard..."
-          );
-          setIsSuccess(true);
-          setTimeout(() => {
-            router.push("/auth/dashboard");
-          }, 2000);
-        } else {
-          setMessage(data.message || "Failed to decline invitation");
-        }
-      } catch (error) {
+        setIsSuccess(true);
+        setTimeout(() => {
+          router.push("/auth/dashboard");
+        }, 2000);
+      } catch (error: unknown) {
         console.error("Error declining invitation:", error);
-        setMessage("Failed to decline invitation");
+        if (
+          error &&
+          typeof error === "object" &&
+          "data" in error &&
+          error.data &&
+          typeof error.data === "object" &&
+          "message" in error.data
+        ) {
+          setMessage((error.data as { message: string }).message);
+        } else {
+          setMessage("Failed to decline invitation");
+        }
       } finally {
         setIsLoading(false);
       }
     },
-    [router]
+    [router, declineInvitation]
   );
 
   useEffect(() => {
     const resolveParams = async () => {
       const resolvedParams = await params;
-      await declineInvitation(resolvedParams.id);
+      await handleDeclineInvitation(resolvedParams.id);
     };
     resolveParams();
-  }, [params, declineInvitation]);
+  }, [params, handleDeclineInvitation]);
 
   if (isLoading) {
     return (

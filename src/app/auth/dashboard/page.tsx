@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { authApi } from "@/redux/slices/api/auth/auth";
 import { useGetTripsQuery } from "@/redux/slices/api/trips/trips";
+import { useLogoutMutation } from "@/redux/slices/api/auth/auth";
+import { getDestinationImage } from "@/utils/destinationImages";
 
 interface User {
   id: string;
@@ -12,218 +14,609 @@ interface User {
   onboardingCompleted: boolean;
 }
 
-interface Trip {
-  _id: string;
-  destination: string;
-  country: string;
-  startDate: string;
-  endDate: string;
-  activities: string[];
-  weather?: {
-    temperature: number;
-    condition: string;
-  };
-  collaborators: User[];
-}
-
-const DashboardPage = () => {
+export default function DashboardPage() {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   const router = useRouter();
-  const [logout] = authApi.useLogoutMutation();
   const {
     data: tripsData,
     isLoading: tripsLoading,
-    error,
+    error: tripsError,
   } = useGetTripsQuery("");
+  const [logout] = useLogoutMutation();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
+    const userData = localStorage.getItem("user");
+
     if (!token) {
       router.push("/auth/login");
       return;
     }
 
-    const userData = localStorage.getItem("user");
     if (userData) {
       setUser(JSON.parse(userData));
     }
-    setIsLoading(false);
+
+    setIsLoaded(true);
   }, [router]);
 
   const handleLogout = async () => {
     try {
-      await logout({}).unwrap();
+      await logout(undefined).unwrap();
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       router.push("/auth/login");
     } catch (error) {
-      console.error("Logout failed:", error);
+      console.error("Logout error:", error);
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       router.push("/auth/login");
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const month = date.toLocaleDateString("en-US", { month: "short" });
-    const day = date.getDate();
-    return `${month} ${day}`;
+  const trips = tripsData?.data
+    ? [...(tripsData.data.upcoming || []), ...(tripsData.data.past || [])]
+    : [];
+
+  const stats = {
+    totalTrips: trips.length,
+    upcomingTrips: tripsData?.data?.upcoming?.length || 0,
+    completedTrips: tripsData?.data?.past?.length || 0,
+    totalDays: trips.reduce((total, trip) => {
+      const start = new Date(trip.startDate);
+      const end = new Date(trip.endDate);
+      const days = Math.ceil(
+        (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      return total + days;
+    }, 0),
   };
 
-  const formatDateRange = (startDate: string, endDate: string) => {
-    const start = formatDate(startDate);
-    const end = formatDate(endDate);
-    return `${start} - ${end}`;
+  const recentTrips = trips.slice(0, 3);
+
+  const getUserInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n: string) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   };
 
-  const getDestinationImage = (destination: string) => {
-    const images: { [key: string]: string } = {
-      Paris:
-        "https://images.unsplash.com/photo-1502602898536-47ad22581b52?w=150&h=100&fit=crop",
-      Tokyo:
-        "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=150&h=100&fit=crop",
-      Rome: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=150&h=100&fit=crop",
-      Barcelona:
-        "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=150&h=100&fit=crop",
-    };
+  if (!isLoaded) {
     return (
-      images[destination] ||
-      "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=150&h=100&fit=crop"
-    );
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl">Loading...</div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900">My Trips</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push("/auth/dashboard/collaborators")}
-                className="bg-blue-100 hover:bg-blue-200 text-blue-900 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              >
-                Collaborators
-              </button>
-              <button
-                onClick={() => router.push("/auth/dashboard/create-trip")}
-                className="bg-gray-100 hover:bg-gray-200 text-gray-900 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              >
-                Create Trip
-              </button>
-              <span className="text-gray-700">
-                Welcome, {user?.name || "User"}!
-              </span>
-              <button
-                onClick={handleLogout}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-              >
-                Sign Out
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-grey-50">
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-blue-600/5"></div>
 
-      <main className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        {tripsLoading ? (
-          <div className="text-center py-8">
-            <div className="text-xl">Loading trips...</div>
-          </div>
-        ) : error ? (
-          <div className="text-center py-8">
-            <div className="text-xl text-red-600">Error loading trips</div>
-          </div>
-        ) : (
-          <div className="space-y-8">
-            <div>
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Upcoming</h2>
-              {tripsData?.data?.upcoming &&
-              tripsData.data.upcoming.length > 0 ? (
-                <div className="space-y-4">
-                  {tripsData.data.upcoming.map((trip: Trip) => (
-                    <div
-                      key={trip._id}
-                      className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors cursor-pointer"
-                      onClick={() =>
-                        router.push(`/auth/dashboard/trips/${trip._id}`)
-                      }
+      <div className="relative z-10">
+        <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-6 py-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-4">
+                <div className="w-10 h-10 bg-gradient-to-r from-gray-600 to-gray-800 rounded-xl flex items-center justify-center animate-pulse-slow">
+                  <span className="text-white font-bold text-xl">P</span>
+                </div>
+                <span className="text-2xl font-bold gradient-text">
+                  PackPal
+                </span>
+              </div>
+
+              <div className="flex items-center space-x-6">
+                <Link
+                  href="/auth/dashboard/notifications"
+                  className="relative p-2 text-gray-600 hover:text-blue-600 transition-colors"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 17h5l-5 5v-5zM10.5 3.75a6 6 0 00-6 6v3.75a6 6 0 006 6h7.5a6 6 0 006-6v-3.75a6 6 0 00-6-6h-7.5z"
+                    />
+                  </svg>
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
+                </Link>
+
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-800 rounded-full flex items-center justify-center">
+                    <span className="text-white font-semibold text-sm">
+                      {user ? getUserInitials(user.name) : "U"}
+                    </span>
+                  </div>
+                  <span className="text-gray-700 font-medium">
+                    {user ? user.name : "User"}
+                  </span>
+                  <button
+                    onClick={handleLogout}
+                    className="text-gray-500 hover:text-red-600 transition-colors"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
                     >
-                      <img
-                        src={getDestinationImage(trip.destination)}
-                        alt={trip.destination}
-                        className="w-16 h-12 rounded-lg object-cover mr-4"
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                       />
-                      <div className="flex-1">
-                        <h3 className="font-medium text-gray-900">
-                          {trip.destination}, {trip.country}
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </nav>
+
+        <main className="max-w-7xl mx-auto px-6 py-8">
+          <div
+            className={`mb-8 ${
+              isLoaded ? "animate-fade-in-down" : "opacity-0"
+            }`}
+          >
+            <h1 className="text-4xl font-bold text-gray-800 mb-2">
+              Welcome back, {user ? user.name.split(" ")[0] : "Traveler"}!
+            </h1>
+            <p className="text-gray-600">Ready for your next adventure?</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div
+              className={`card ${
+                isLoaded ? "animate-slide-in-left" : "opacity-0"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Total Trips</p>
+                  <p className="text-3xl font-bold text-gray-800">
+                    {tripsLoading ? "..." : stats.totalTrips}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6 text-blue-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className={`card ${
+                isLoaded ? "animate-fade-in-up" : "opacity-0"
+              }`}
+              style={{ animationDelay: "0.1s" }}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Upcoming</p>
+                  <p className="text-3xl font-bold text-gray-800">
+                    {tripsLoading ? "..." : stats.upcomingTrips}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className={`card ${
+                isLoaded ? "animate-fade-in-up" : "opacity-0"
+              }`}
+              style={{ animationDelay: "0.2s" }}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Completed</p>
+                  <p className="text-3xl font-bold text-gray-800">
+                    {tripsLoading ? "..." : stats.completedTrips}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6 text-blue-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className={`card ${
+                isLoaded ? "animate-slide-in-right" : "opacity-0"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Total Days</p>
+                  <p className="text-3xl font-bold text-gray-800">
+                    {tripsLoading ? "..." : stats.totalDays}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
+              {["overview", "trips", "activities", "settings"].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                    activeTab === tab
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : "text-gray-600 hover:text-gray-800"
+                  }`}
+                >
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {activeTab === "overview" && (
+            <div className="space-y-8">
+              <div
+                className={`${isLoaded ? "animate-fade-in-up" : "opacity-0"}`}
+              >
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-800">
+                    Recent Trips
+                  </h2>
+                  <Link
+                    href="/auth/dashboard/trips"
+                    className="text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    View all
+                  </Link>
+                </div>
+
+                {tripsLoading ? (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="card animate-pulse">
+                        <div className="bg-gray-200 h-48 rounded-lg mb-4"></div>
+                        <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                        <div className="h-3 bg-gray-200 rounded mb-3"></div>
+                        <div className="h-3 bg-gray-200 rounded"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : tripsError ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">
+                      Failed to load trips. Please try again.
+                    </p>
+                  </div>
+                ) : recentTrips.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500 mb-4">
+                      No trips yet. Start planning your first adventure!
+                    </p>
+                    <Link
+                      href="/auth/dashboard/create-trip"
+                      className="btn-primary inline-flex items-center space-x-2"
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                        />
+                      </svg>
+                      <span>Create Your First Trip</span>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {recentTrips.map((trip, index) => (
+                      <Link
+                        key={trip._id}
+                        href={`/auth/dashboard/trips/${trip._id}`}
+                        className="card group cursor-pointer hover:scale-105 transition-transform"
+                      >
+                        <div className="relative mb-4">
+                          <img
+                            src={getDestinationImage(
+                              trip.destination,
+                              trip.country
+                            )}
+                            alt={trip.destination}
+                            className="w-full h-48 object-cover rounded-lg"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = `https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=400&fit=crop&crop=center&q=80`;
+                            }}
+                          />
+                          <div className="absolute top-3 right-3">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                new Date(trip.startDate) > new Date()
+                                  ? "bg-blue-100 text-blue-800"
+                                  : "bg-green-100 text-green-800"
+                              }`}
+                            >
+                              {new Date(trip.startDate) > new Date()
+                                ? "upcoming"
+                                : "completed"}
+                            </span>
+                          </div>
+                        </div>
+
+                        <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                          {trip.destination} Trip
                         </h3>
-                        <p className="text-sm text-blue-600">
-                          {formatDateRange(trip.startDate, trip.endDate)}
+                        <p className="text-gray-600 mb-3">
+                          {trip.destination}, {trip.country}
+                        </p>
+
+                        <div className="flex justify-between items-center text-sm text-gray-500">
+                          <span>
+                            {new Date(trip.startDate).toLocaleDateString()}
+                          </span>
+                          <span>to</span>
+                          <span>
+                            {new Date(trip.endDate).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div
+                className={`grid grid-cols-1 lg:grid-cols-2 gap-8 ${
+                  isLoaded ? "animate-fade-in-up" : "opacity-0"
+                }`}
+                style={{ animationDelay: "0.3s" }}
+              >
+                <div className="card">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4">
+                    Quick Actions
+                  </h3>
+                  <div className="space-y-3">
+                    <Link
+                      href="/auth/dashboard/create-trip"
+                      className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <svg
+                          className="w-5 h-5 text-blue-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-800">
+                          Create New Trip
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Plan your next adventure
                         </p>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  No upcoming trips. Create your first trip!
-                </div>
-              )}
-            </div>
+                    </Link>
 
-            <div>
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Past</h2>
-              {tripsData?.data?.past && tripsData.data.past.length > 0 ? (
-                <div className="space-y-4">
-                  {tripsData.data.past.map((trip: Trip) => (
-                    <div
-                      key={trip._id}
-                      className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors cursor-pointer"
-                      onClick={() =>
-                        router.push(`/auth/dashboard/trips/${trip._id}`)
-                      }
+                    <Link
+                      href="/auth/dashboard/templates"
+                      className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
                     >
-                      <img
-                        src={getDestinationImage(trip.destination)}
-                        alt={trip.destination}
-                        className="w-16 h-12 rounded-lg object-cover mr-4"
-                      />
-                      <div className="flex-1">
-                        <h3 className="font-medium text-gray-900">
-                          {trip.destination}, {trip.country}
-                        </h3>
-                        <p className="text-sm text-blue-600">
-                          {formatDateRange(trip.startDate, trip.endDate)}
+                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                        <svg
+                          className="w-5 h-5 text-green-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-800">
+                          Use Template
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Start with a pre-made plan
                         </p>
                       </div>
+                    </Link>
+
+                    <Link
+                      href="/auth/dashboard/collaborators"
+                      className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                        <svg
+                          className="w-5 h-5 text-purple-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-800">
+                          Invite Friends
+                        </p>
+                        <p className="text-sm text-gray-600">Travel together</p>
+                      </div>
+                    </Link>
+                  </div>
+                </div>
+
+                {/* <div className="card">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4">
+                    Recent Activity
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="flex items-start space-x-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg
+                          className="w-4 h-4 text-blue-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-800">
+                          Created new trip &quot;Paris Adventure&quot;
+                        </p>
+                        <p className="text-xs text-gray-500">2 hours ago</p>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  No past trips yet.
-                </div>
-              )}
+
+                    <div className="flex items-start space-x-3">
+                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg
+                          className="w-4 h-4 text-green-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-800">
+                          Completed packing list for Tokyo trip
+                        </p>
+                        <p className="text-xs text-gray-500">1 day ago</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start space-x-3">
+                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg
+                          className="w-4 h-4 text-purple-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-800">
+                          Sarah joined your Tokyo trip
+                        </p>
+                        <p className="text-xs text-gray-500">3 days ago</p>
+                      </div>
+                    </div>
+                  </div>
+                </div> */}
+              </div>
             </div>
-          </div>
-        )}
-      </main>
+          )}
+        </main>
+      </div>
     </div>
   );
-};
-
-export default DashboardPage;
+}

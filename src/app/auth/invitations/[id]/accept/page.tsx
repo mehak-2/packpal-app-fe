@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { API_CONFIG } from "../../../../../config/api";
+import { useAcceptInvitationMutation } from "@/redux/slices/api/collaboration/collaboration";
 
 const AcceptInvitationPage = ({
   params,
@@ -13,8 +13,9 @@ const AcceptInvitationPage = ({
   const [message, setMessage] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const router = useRouter();
+  const [acceptInvitation] = useAcceptInvitationMutation();
 
-  const acceptInvitation = useCallback(
+  const handleAcceptInvitation = useCallback(
     async (id: string) => {
       try {
         const token = localStorage.getItem("token");
@@ -24,46 +25,42 @@ const AcceptInvitationPage = ({
           return;
         }
 
-        const response = await fetch(
-          `${API_CONFIG.baseUrl}/invitations/${id}/accept`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+        await acceptInvitation(id).unwrap();
+        setMessage(
+          "Invitation accepted successfully! Redirecting to dashboard..."
         );
-
-        const data = await response.json();
-
-        if (response.ok) {
-          setMessage(
-            "Invitation accepted successfully! Redirecting to dashboard..."
-          );
-          setIsSuccess(true);
-          setTimeout(() => {
-            router.push("/auth/dashboard");
-          }, 2000);
-        } else {
-          setMessage(data.message || "Failed to accept invitation");
-        }
-      } catch (error) {
+        setIsSuccess(true);
+        setTimeout(() => {
+          router.push("/auth/dashboard");
+        }, 2000);
+      } catch (error: unknown) {
         console.error("Error accepting invitation:", error);
-        setMessage("Failed to accept invitation");
+        if (
+          error &&
+          typeof error === "object" &&
+          "data" in error &&
+          error.data &&
+          typeof error.data === "object" &&
+          "message" in error.data
+        ) {
+          setMessage((error.data as { message: string }).message);
+        } else {
+          setMessage("Failed to accept invitation");
+        }
       } finally {
         setIsLoading(false);
       }
     },
-    [router]
+    [router, acceptInvitation]
   );
 
   useEffect(() => {
     const resolveParams = async () => {
       const resolvedParams = await params;
-      await acceptInvitation(resolvedParams.id);
+      await handleAcceptInvitation(resolvedParams.id);
     };
     resolveParams();
-  }, [params, acceptInvitation]);
+  }, [params, handleAcceptInvitation]);
 
   if (isLoading) {
     return (

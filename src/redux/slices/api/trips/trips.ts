@@ -4,7 +4,7 @@ import { API_CONFIG } from "../../../../config/api";
 export const tripsApi = createApi({
   reducerPath: "tripsApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: `${API_CONFIG.baseUrl}/trips`,
+    baseUrl: API_CONFIG.baseUrl,
     credentials: "include",
     prepareHeaders: (headers) => {
       const token = localStorage.getItem("token");
@@ -14,59 +14,100 @@ export const tripsApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ["Trip"],
+  tagTypes: ["Trips"],
   endpoints: (builder) => ({
     getTrips: builder.query({
-      query: () => "",
-      providesTags: ["Trip"],
+      query: () => "/trips",
+      providesTags: (result) =>
+        result && Array.isArray(result.data)
+          ? [
+              ...result.data.map(({ _id }: { _id: string }) => ({
+                type: "Trips" as const,
+                id: _id,
+              })),
+              { type: "Trips", id: "LIST" },
+            ]
+          : [{ type: "Trips", id: "LIST" }],
     }),
     getTripById: builder.query({
-      query: (id) => `/${id}`,
-      providesTags: (result, error, id) => [{ type: "Trip", id }],
+      query: (id) => `/trips/${id}`,
+      providesTags: (result, error, id) => [{ type: "Trips", id }],
     }),
     createTrip: builder.mutation({
-      query: (tripData) => ({
-        url: "",
+      query: (body) => ({
+        url: "/trips",
         method: "POST",
-        body: tripData,
+        body,
       }),
-      invalidatesTags: ["Trip"],
     }),
     updateTrip: builder.mutation({
-      query: ({ id, ...tripData }) => ({
-        url: `/${id}`,
+      query: ({ id, body }) => ({
+        url: `/trips/${id}`,
         method: "PUT",
-        body: tripData,
+        body,
       }),
-      invalidatesTags: (result, error, { id }) => [
-        { type: "Trip", id },
-        "Trip",
-      ],
     }),
     deleteTrip: builder.mutation({
       query: (id) => ({
-        url: `/${id}`,
+        url: `/trips/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["Trip"],
     }),
     updatePackingList: builder.mutation({
       query: ({ id, packingList }) => ({
-        url: `/${id}/packing-list`,
+        url: `/trips/${id}/packing-list`,
         method: "PUT",
-        body: { packingList },
+        body: packingList,
       }),
-      invalidatesTags: (result, error, { id }) => [
-        { type: "Trip", id },
-        "Trip",
-      ],
+      async onQueryStarted({ id }, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          dispatch(tripsApi.util.invalidateTags([{ type: "Trips", id }]));
+          dispatch(
+            tripsApi.util.invalidateTags([{ type: "Trips", id: "LIST" }])
+          );
+        } catch {}
+      },
     }),
     regeneratePackingList: builder.mutation({
       query: (id) => ({
-        url: `/${id}/regenerate-packing-list`,
+        url: `/trips/${id}/regenerate-packing-list`,
         method: "POST",
       }),
-      invalidatesTags: (result, error, id) => [{ type: "Trip", id }, "Trip"],
+      async onQueryStarted(id, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          dispatch(tripsApi.util.invalidateTags([{ type: "Trips", id }]));
+          dispatch(
+            tripsApi.util.invalidateTags([{ type: "Trips", id: "LIST" }])
+          );
+        } catch {}
+      },
+    }),
+    generateAIPackingList: builder.mutation({
+      query: (id) => ({
+        url: `/trips/${id}/ai-packing-list`,
+        method: "POST",
+      }),
+    }),
+    getAIPackingSuggestions: builder.query({
+      query: (id) => `/trips/${id}/ai-suggestions`,
+    }),
+    createTemplate: builder.mutation({
+      query: (body) => ({
+        url: "/templates",
+        method: "POST",
+        body,
+      }),
+    }),
+    getTemplates: builder.query({
+      query: () => "/templates",
+    }),
+    deleteTemplate: builder.mutation({
+      query: (id) => ({
+        url: `/templates/${id}`,
+        method: "DELETE",
+      }),
     }),
   }),
 });
@@ -79,4 +120,9 @@ export const {
   useDeleteTripMutation,
   useUpdatePackingListMutation,
   useRegeneratePackingListMutation,
+  useGenerateAIPackingListMutation,
+  useGetAIPackingSuggestionsQuery,
+  useCreateTemplateMutation,
+  useGetTemplatesQuery,
+  useDeleteTemplateMutation,
 } = tripsApi;

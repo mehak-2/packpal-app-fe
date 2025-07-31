@@ -6,10 +6,16 @@ export const ENV_CONFIG = {
   production: {
     apiBaseUrl:
       process.env.NEXT_PUBLIC_API_BASE_URL ||
-      "https://your-production-api.com/api",
+      "https://packpal-app-be.onrender.com/api",
     serverUrl:
-      process.env.NEXT_PUBLIC_SERVER_URL || "https://your-production-api.com",
+      process.env.NEXT_PUBLIC_SERVER_URL ||
+      "https://packpal-app-be.onrender.com",
   },
+  RAPIDAPI_KEY:
+    process.env.NEXT_PUBLIC_RAPIDAPI_KEY ||
+    "481449c788msh69e72119f2789b3p104c18jsn11d466e3b9d7",
+  RAPIDAPI_HOST:
+    process.env.NEXT_PUBLIC_RAPIDAPI_HOST || "wft-geo-db.p.rapidapi.com",
 };
 
 const isDevelopment = process.env.NODE_ENV === "development";
