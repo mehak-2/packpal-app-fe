@@ -137,7 +137,10 @@ const TripDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => {
     useRegeneratePackingListMutation();
   const [createTemplate] = useCreateTemplateMutation();
 
-  const trip = tripData?.data;
+  const trip =
+    tripData && typeof tripData === "object" && "data" in tripData
+      ? (tripData as { data: Trip }).data
+      : undefined;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -391,39 +394,45 @@ const TripDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => {
   };
 
   const handleRegeneratePackingList = async () => {
+    if (!tripId) return;
     try {
       const result = await regeneratePackingList(tripId).unwrap();
       console.log("Regenerated packing list:", result);
 
-      dispatch(
-        tripsApi.util.updateQueryData("getTrips", "", (draft) => {
-          if (draft?.data) {
-            if (
-              draft.data.upcoming &&
-              draft.data.upcoming.find((t: { _id: string }) => t._id === tripId)
-            ) {
-              const upcomingIndex = draft.data.upcoming.findIndex(
-                (t: { _id: string }) => t._id === tripId
-              );
-              if (upcomingIndex !== -1) {
-                draft.data.upcoming[upcomingIndex].packingList =
-                  result.data.packingList;
-              }
-            } else if (
-              draft.data.past &&
-              draft.data.past.find((t: { _id: string }) => t._id === tripId)
-            ) {
-              const pastIndex = draft.data.past.findIndex(
-                (t: { _id: string }) => t._id === tripId
-              );
-              if (pastIndex !== -1) {
-                draft.data.past[pastIndex].packingList =
-                  result.data.packingList;
+      if (result && typeof result === "object" && "data" in result) {
+        const resultData = result as { data: { packingList: unknown } };
+        dispatch(
+          tripsApi.util.updateQueryData("getTrips", "", (draft) => {
+            if (draft?.data) {
+              if (
+                draft.data.upcoming &&
+                draft.data.upcoming.find(
+                  (t: { _id: string }) => t._id === tripId
+                )
+              ) {
+                const upcomingIndex = draft.data.upcoming.findIndex(
+                  (t: { _id: string }) => t._id === tripId
+                );
+                if (upcomingIndex !== -1) {
+                  draft.data.upcoming[upcomingIndex].packingList =
+                    resultData.data.packingList;
+                }
+              } else if (
+                draft.data.past &&
+                draft.data.past.find((t: { _id: string }) => t._id === tripId)
+              ) {
+                const pastIndex = draft.data.past.findIndex(
+                  (t: { _id: string }) => t._id === tripId
+                );
+                if (pastIndex !== -1) {
+                  draft.data.past[pastIndex].packingList =
+                    resultData.data.packingList;
+                }
               }
             }
-          }
-        })
-      );
+          })
+        );
+      }
     } catch (error) {
       console.error("Failed to regenerate packing list:", error);
     }

@@ -138,7 +138,10 @@ const PackingListPage = ({ params }: { params: Promise<{ id: string }> }) => {
     useRegeneratePackingListMutation();
   const [createTemplate] = useCreateTemplateMutation();
 
-  const trip = tripData?.data;
+  const trip =
+    tripData && typeof tripData === "object" && "data" in tripData
+      ? (tripData as { data: Trip }).data
+      : undefined;
 
   useEffect(() => {
     if (trip?.packingList && !localPackingList) {
@@ -339,8 +342,10 @@ const PackingListPage = ({ params }: { params: Promise<{ id: string }> }) => {
 
       dispatch(
         tripsApi.util.updateQueryData("getTripById", tripId!, (draft) => {
-          if (draft?.data) {
-            draft.data.packingList = updatedLocalList;
+          if (draft && typeof draft === "object" && "data" in draft) {
+            (
+              draft as { data: { packingList: PackingListType } }
+            ).data.packingList = updatedLocalList;
           }
         })
       );

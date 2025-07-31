@@ -38,7 +38,10 @@ const ShareTripPage = () => {
   const [removeCollaborator] = useRemoveCollaboratorMutation();
   const [updateCollaboratorRole] = useUpdateCollaboratorRoleMutation();
 
-  const trip = tripData?.data;
+  const trip =
+    tripData && typeof tripData === "object" && "data" in tripData
+      ? (tripData as { data: { destination: string } }).data
+      : undefined;
   const collaborators = collaboratorsData?.collaborators || [];
 
   const handleInvite = async (e: React.FormEvent) => {

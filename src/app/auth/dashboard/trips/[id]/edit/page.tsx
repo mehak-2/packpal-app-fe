@@ -100,8 +100,8 @@ const EditTripPage = () => {
   ];
 
   useEffect(() => {
-    if (tripData?.data) {
-      const trip: Trip = tripData.data;
+    if (tripData && typeof tripData === "object" && "data" in tripData) {
+      const trip: Trip = (tripData as { data: unknown }).data as Trip;
       setFormData({
         destination: trip.destination,
         country: trip.country,
@@ -129,7 +129,7 @@ const EditTripPage = () => {
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
-      await updateTrip({ id, ...formData }).unwrap();
+      await updateTrip({ id, body: formData }).unwrap();
       router.push(`/auth/dashboard/trips/${id}`);
     } catch (error) {
       console.error("Failed to update trip:", error);

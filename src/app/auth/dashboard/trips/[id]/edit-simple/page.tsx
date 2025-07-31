@@ -53,8 +53,8 @@ const EditTripSimplePage = ({
   }, [params]);
 
   useEffect(() => {
-    if (tripData?.data) {
-      const trip: Trip = tripData.data;
+    if (tripData && typeof tripData === "object" && "data" in tripData) {
+      const trip: Trip = (tripData as { data: Trip }).data;
       setFormData({
         tripName: `${trip.destination} Trip`,
         destination: `${trip.destination}, ${trip.country}`,
@@ -83,13 +83,15 @@ const EditTripSimplePage = ({
 
       await updateTrip({
         id: tripId,
-        destination,
-        country,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        activities: formData.notes.includes("Activities:")
-          ? formData.notes.split("Activities:")[1].trim().split(", ")
-          : [],
+        body: {
+          destination,
+          country,
+          startDate: formData.startDate,
+          endDate: formData.endDate,
+          activities: formData.notes.includes("Activities:")
+            ? formData.notes.split("Activities:")[1].trim().split(", ")
+            : [],
+        },
       }).unwrap();
 
       router.push(`/auth/dashboard/trips/${tripId}`);
@@ -221,7 +223,7 @@ const EditTripSimplePage = ({
                 Collaborators
               </label>
               <div className="flex items-center space-x-2">
-                {tripData?.data?.collaborators
+                {(tripData as { data: Trip })?.data?.collaborators
                   ?.slice(0, 3)
                   .map(
                     (collaborator: {
@@ -243,9 +245,11 @@ const EditTripSimplePage = ({
                       </div>
                     )
                   )}
-                {tripData?.data?.collaborators?.length > 3 && (
+                {(tripData as { data: Trip })?.data?.collaborators?.length >
+                  3 && (
                   <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-gray-600 text-sm font-medium">
-                    +{tripData.data.collaborators.length - 3}
+                    +
+                    {(tripData as { data: Trip }).data.collaborators.length - 3}
                   </div>
                 )}
               </div>

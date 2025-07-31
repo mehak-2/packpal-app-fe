@@ -51,7 +51,10 @@ const ActivityLogPage = () => {
       limit: 20,
     });
 
-  const trip = tripData?.data;
+  const trip =
+    tripData && typeof tripData === "object" && "data" in tripData
+      ? (tripData as { data: { destination: string } }).data
+      : undefined;
   const collaborators = collaboratorsData?.collaborators || [];
   const activities = activityData?.activities || [];
   const totalPages = activityData?.totalPages || 1;
@@ -275,7 +278,7 @@ const ActivityLogPage = () => {
             </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-900">
-                Trip to {trip.destination}
+                Trip to {trip?.destination || "Unknown Destination"}
               </h2>
               <p className="text-gray-600">
                 Track collaborators and recent changes

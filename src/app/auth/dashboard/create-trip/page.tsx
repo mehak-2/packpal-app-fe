@@ -190,8 +190,17 @@ export default function CreateTripPage() {
 
       console.log("Create trip response:", response);
 
-      if (response.success) {
-        router.push(`/auth/dashboard/trips/${response.data._id}`);
+      if (
+        response &&
+        typeof response === "object" &&
+        "success" in response &&
+        response.success
+      ) {
+        const responseData = response as {
+          success: boolean;
+          data: { _id: string };
+        };
+        router.push(`/auth/dashboard/trips/${responseData.data._id}`);
       }
     } catch (err: unknown) {
       console.error("Create trip error:", err);
