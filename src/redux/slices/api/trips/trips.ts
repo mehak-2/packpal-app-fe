@@ -80,9 +80,13 @@ export const tripsApi = createApi({
       async onQueryStarted(id: string, { dispatch, queryFulfilled }) {
         try {
           await queryFulfilled;
-          dispatch(tripsApi.util.invalidateTags([{ type: "Trips", id }]));
           dispatch(
-            tripsApi.util.invalidateTags([{ type: "Trips", id: "LIST" }])
+            tripsApi.util.invalidateTags([{ type: "Trips" as const, id }])
+          );
+          dispatch(
+            tripsApi.util.invalidateTags([
+              { type: "Trips" as const, id: "LIST" },
+            ])
           );
         } catch {}
       },
