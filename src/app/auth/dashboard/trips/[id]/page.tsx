@@ -391,6 +391,7 @@ const TripDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => {
   };
 
   const handleRegeneratePackingList = async () => {
+    if (!tripId) return;
     try {
       const result = await regeneratePackingList(tripId).unwrap();
       console.log("Regenerated packing list:", result);
