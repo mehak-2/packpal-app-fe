@@ -73,11 +73,11 @@ export const tripsApi = createApi({
       },
     }),
     regeneratePackingList: builder.mutation<unknown, string>({
-      query: (id) => ({
+      query: (id: string) => ({
         url: `/trips/${id}/regenerate-packing-list`,
         method: "POST",
       }),
-      async onQueryStarted(id, { dispatch, queryFulfilled }) {
+      async onQueryStarted(id: string, { dispatch, queryFulfilled }) {
         try {
           await queryFulfilled;
           dispatch(tripsApi.util.invalidateTags([{ type: "Trips", id }]));
