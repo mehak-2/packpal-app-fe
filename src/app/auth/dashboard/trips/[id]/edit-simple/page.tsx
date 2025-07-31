@@ -83,13 +83,15 @@ const EditTripSimplePage = ({
 
       await updateTrip({
         id: tripId,
-        destination,
-        country,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        activities: formData.notes.includes("Activities:")
-          ? formData.notes.split("Activities:")[1].trim().split(", ")
-          : [],
+        body: {
+          destination,
+          country,
+          startDate: formData.startDate,
+          endDate: formData.endDate,
+          activities: formData.notes.includes("Activities:")
+            ? formData.notes.split("Activities:")[1].trim().split(", ")
+            : [],
+        },
       }).unwrap();
 
       router.push(`/auth/dashboard/trips/${tripId}`);
