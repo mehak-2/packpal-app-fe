@@ -129,7 +129,7 @@ const EditTripPage = () => {
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
-      await updateTrip({ id, ...formData }).unwrap();
+      await updateTrip({ id, body: formData }).unwrap();
       router.push(`/auth/dashboard/trips/${id}`);
     } catch (error) {
       console.error("Failed to update trip:", error);
