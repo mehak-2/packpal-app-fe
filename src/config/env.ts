@@ -3,6 +3,7 @@ export const ENV_CONFIG = {
     apiBaseUrl: "http://localhost:5000/api",
     serverUrl: "http://localhost:5000",
   },
+
   production: {
     apiBaseUrl:
       process.env.NEXT_PUBLIC_API_BASE_URL ||

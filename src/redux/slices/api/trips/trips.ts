@@ -14,24 +14,12 @@ export const tripsApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ["Trips"],
   endpoints: (builder) => ({
     getTrips: builder.query({
       query: () => "/trips",
-      providesTags: (result) =>
-        result && Array.isArray(result.data)
-          ? [
-              ...result.data.map(({ _id }: { _id: string }) => ({
-                type: "Trips" as const,
-                id: _id,
-              })),
-              { type: "Trips", id: "LIST" },
-            ]
-          : [{ type: "Trips", id: "LIST" }],
     }),
     getTripById: builder.query({
       query: (id) => `/trips/${id}`,
-      providesTags: (result, error, id) => [{ type: "Trips", id }],
     }),
     createTrip: builder.mutation({
       query: (body) => ({
@@ -73,40 +61,6 @@ export const tripsApi = createApi({
       query: (id) => ({
         url: `/trips/${id}/regenerate-packing-list`,
         method: "POST",
-      }),
-      async onQueryStarted(id, { dispatch, queryFulfilled }) {
-        try {
-          await queryFulfilled;
-          dispatch(tripsApi.util.invalidateTags([{ type: "Trips", id }]));
-          dispatch(
-            tripsApi.util.invalidateTags([{ type: "Trips", id: "LIST" }])
-          );
-        } catch {}
-      },
-    }),
-    generateAIPackingList: builder.mutation({
-      query: (id) => ({
-        url: `/trips/${id}/ai-packing-list`,
-        method: "POST",
-      }),
-    }),
-    getAIPackingSuggestions: builder.query({
-      query: (id) => `/trips/${id}/ai-suggestions`,
-    }),
-    createTemplate: builder.mutation({
-      query: (body) => ({
-        url: "/templates",
-        method: "POST",
-        body,
-      }),
-    }),
-    getTemplates: builder.query({
-      query: () => "/templates",
-    }),
-    deleteTemplate: builder.mutation({
-      query: (id) => ({
-        url: `/templates/${id}`,
-        method: "DELETE",
       }),
     }),
   }),
