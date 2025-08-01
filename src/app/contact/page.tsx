@@ -29,9 +29,62 @@ export default function Contact() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<{
+    type: "success" | "error" | null;
+    message: string;
+  }>({ type: null, message: "" });
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
+    setIsSubmitting(true);
+    setSubmitStatus({ type: null, message: "" });
+
+    try {
+      const response = await fetch(
+        `${
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api"
+        }/contact/submit`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        setSubmitStatus({
+          type: "success",
+          message:
+            result.message ||
+            "Thank you for your message! We'll get back to you soon.",
+        });
+        setFormData({
+          name: "",
+          email: "",
+          subject: "",
+          message: "",
+        });
+      } else {
+        setSubmitStatus({
+          type: "error",
+          message:
+            result.message || "Failed to send message. Please try again.",
+        });
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      setSubmitStatus({
+        type: "error",
+        message: "An error occurred. Please try again later.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const contactInfo = [
@@ -137,8 +190,8 @@ export default function Contact() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-green-600/10"></div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-grey-50">
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-grey-600/10"></div>
 
       <div className="relative z-10">
         <nav className="flex justify-between items-center p-6 max-w-7xl mx-auto">
@@ -356,11 +409,35 @@ export default function Contact() {
                   ></textarea>
                 </div>
 
+                {submitStatus.type && (
+                  <div
+                    className={`p-4 rounded-lg ${
+                      submitStatus.type === "success"
+                        ? "bg-green-50 border border-green-200 text-green-800"
+                        : "bg-red-50 border border-red-200 text-red-800"
+                    }`}
+                  >
+                    {submitStatus.message}
+                  </div>
+                )}
+
                 <button
                   type="submit"
-                  className="w-full btn-primary py-4 text-lg font-semibold"
+                  disabled={isSubmitting}
+                  className={`w-full py-4 text-lg font-semibold rounded-lg transition-all ${
+                    isSubmitting
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "btn-primary hover:shadow-lg"
+                  }`}
                 >
-                  Send Message
+                  {isSubmitting ? (
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                      Sending...
+                    </div>
+                  ) : (
+                    "Send Message"
+                  )}
                 </button>
               </form>
             </div>
