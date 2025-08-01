@@ -906,6 +906,8 @@ const TripDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => {
                   trip.destinationInfo
                 )}
                 alt={trip.destination}
+                width={800}
+                height={400}
                 className="w-full h-64 object-cover"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
