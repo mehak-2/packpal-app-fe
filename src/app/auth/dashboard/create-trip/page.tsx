@@ -301,6 +301,8 @@ export default function CreateTripPage() {
                       <Image
                         src={dest.image}
                         alt={dest.name}
+                        width={200}
+                        height={150}
                         className="w-full h-24 object-cover rounded-lg mb-3"
                       />
                       <h5 className="font-medium text-gray-800">{dest.name}</h5>
