@@ -49,33 +49,125 @@ const ShareTripPage = () => {
     if (!email.trim()) return;
 
     try {
-      await inviteCollaborator({
+      const result = await inviteCollaborator({
         tripId,
         email: email.trim(),
         role,
       }).unwrap();
 
+      console.log("Invitation sent successfully:", result);
       setEmail("");
       setRole("view");
       setShowInviteForm(false);
-    } catch (error) {
-      console.error("Failed to invite collaborator:", error);
+    } catch (error: unknown) {
+      // Improved error handling
+      let errorMessage = "Failed to invite collaborator";
+      let errorDetails = error;
+
+      if (error && typeof error === "object") {
+        if (
+          "data" in error &&
+          error.data &&
+          typeof error.data === "object" &&
+          "message" in error.data
+        ) {
+          errorMessage = (error.data as { message: string }).message;
+        } else if (
+          "error" in error &&
+          error.error &&
+          typeof error.error === "object" &&
+          "message" in error.error
+        ) {
+          errorMessage = (error.error as { message: string }).message;
+        } else if ("message" in error) {
+          errorMessage = (error as { message: string }).message;
+        }
+
+        if ("status" in error) {
+          errorDetails = {
+            message: errorMessage,
+            status: (error as { status: number }).status,
+            data: "data" in error ? error.data : undefined,
+            originalError: error,
+          };
+        }
+      }
+
+      console.error("Failed to invite collaborator:", {
+        message: errorMessage,
+        details: errorDetails,
+        email: email.trim(),
+        role: role,
+        tripId: tripId,
+      });
+
+      // You could also show a user-friendly error message here
+      alert(`Failed to invite collaborator: ${errorMessage}`);
     }
   };
 
   const handleRemoveCollaborator = async (userId: string) => {
     try {
-      await removeCollaborator({ tripId, userId }).unwrap();
-    } catch (error) {
-      console.error("Failed to remove collaborator:", error);
+      const result = await removeCollaborator({ tripId, userId }).unwrap();
+      console.log("Collaborator removed successfully:", result);
+    } catch (error: unknown) {
+      let errorMessage = "Failed to remove collaborator";
+
+      if (error && typeof error === "object") {
+        if (
+          "data" in error &&
+          error.data &&
+          typeof error.data === "object" &&
+          "message" in error.data
+        ) {
+          errorMessage = (error.data as { message: string }).message;
+        } else if ("message" in error) {
+          errorMessage = (error as { message: string }).message;
+        }
+      }
+
+      console.error("Failed to remove collaborator:", {
+        message: errorMessage,
+        error: error,
+        userId: userId,
+        tripId: tripId,
+      });
+      alert(`Failed to remove collaborator: ${errorMessage}`);
     }
   };
 
   const handleUpdateRole = async (userId: string, newRole: "view" | "edit") => {
     try {
-      await updateCollaboratorRole({ tripId, userId, role: newRole }).unwrap();
-    } catch (error) {
-      console.error("Failed to update collaborator role:", error);
+      const result = await updateCollaboratorRole({
+        tripId,
+        userId,
+        role: newRole,
+      }).unwrap();
+      console.log("Collaborator role updated successfully:", result);
+    } catch (error: unknown) {
+      let errorMessage = "Failed to update collaborator role";
+
+      if (error && typeof error === "object") {
+        if (
+          "data" in error &&
+          error.data &&
+          typeof error.data === "object" &&
+          "message" in error.data
+        ) {
+          errorMessage = (error.data as { message: string }).message;
+        } else if ("message" in error) {
+          errorMessage = (error as { message: string }).message;
+        }
+      }
+
+      console.error("Failed to update collaborator role:", {
+        message: errorMessage,
+        error: error,
+        userId: userId,
+        newRole: newRole,
+        tripId: tripId,
+      });
+      alert(`Failed to update collaborator role: ${errorMessage}`);
     }
   };
 
