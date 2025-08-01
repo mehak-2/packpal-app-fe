@@ -400,6 +400,8 @@ export default function DashboardPage() {
                               trip.country
                             )}
                             alt={trip.destination}
+                            width={800}
+                            height={400}
                             className="w-full h-48 object-cover rounded-lg"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
@@ -657,6 +659,8 @@ export default function DashboardPage() {
                             trip.country
                           )}
                           alt={trip.destination}
+                          width={800}
+                          height={400}
                           className="w-full h-48 object-cover rounded-lg"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
