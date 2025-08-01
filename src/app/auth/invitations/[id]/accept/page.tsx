@@ -20,8 +20,13 @@ const AcceptInvitationPage = ({
       try {
         const token = localStorage.getItem("token");
         if (!token) {
-          setMessage("Please log in to accept this invitation");
+          setMessage(
+            "Please log in to accept this invitation. You'll be redirected to the login page."
+          );
           setIsLoading(false);
+          setTimeout(() => {
+            router.push(`/auth/login?redirect=/auth/invitations/${id}/accept`);
+          }, 3000);
           return;
         }
 

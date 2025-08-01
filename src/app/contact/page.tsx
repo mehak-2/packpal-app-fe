@@ -8,6 +8,7 @@ export default function Contact() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
+
     email: "",
     subject: "",
     message: "",
@@ -28,117 +29,67 @@ export default function Contact() {
       [name]: value,
     }));
   };
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<{
+    type: "success" | "error" | null;
+    message: string;
+  }>({ type: null, message: "" });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
+    setIsSubmitting(true);
+    setSubmitStatus({ type: null, message: "" });
+
+    try {
+      const response = await fetch(
+        `${
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api"
+        }/contact/submit`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        setSubmitStatus({
+          type: "success",
+          message:
+            result.message ||
+            "Thank you for your message! We'll get back to you soon.",
+        });
+        setFormData({
+          name: "",
+          email: "",
+          subject: "",
+          message: "",
+        });
+      } else {
+        setSubmitStatus({
+          type: "error",
+          message:
+            result.message || "Failed to send message. Please try again.",
+        });
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      setSubmitStatus({
+        type: "error",
+        message: "An error occurred. Please try again later.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const contactInfo = [
-    {
-      icon: (
-        <svg
-          className="w-6 h-6 text-white"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-          />
-        </svg>
-      ),
-      title: "Email Us",
-      info: "hello@packpal.com",
-      description: "We typically respond within 24 hours",
-    },
-    {
-      icon: (
-        <svg
-          className="w-6 h-6 text-white"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-          />
-        </svg>
-      ),
-      title: "Call Us",
-      info: "+1 (555) 123-4567",
-      description: "Mon-Fri 9AM-6PM PST",
-    },
-    {
-      icon: (
-        <svg
-          className="w-6 h-6 text-white"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-          />
-        </svg>
-      ),
-      title: "Visit Us",
-      info: "San Francisco, CA",
-      description: "123 Travel Street, Suite 100",
-    },
-  ];
-
-  const faqs = [
-    {
-      question: "How does PackPal's AI work?",
-      answer:
-        "Our AI analyzes your travel preferences, destination, weather, and activities to create personalized recommendations. It learns from your past trips to improve suggestions over time.",
-    },
-    {
-      question: "Can I collaborate with friends on trip planning?",
-      answer:
-        "Absolutely! PackPal supports collaborative planning. You can invite friends and family to join your trips, share itineraries, and work together on packing lists.",
-    },
-    {
-      question: "Is my travel data secure?",
-      answer:
-        "Yes, we take security seriously. All your data is encrypted, and we follow industry best practices to protect your privacy and personal information.",
-    },
-    {
-      question: "Do you support offline access?",
-      answer:
-        "Yes, you can access your saved trips and packing lists offline. Simply sync your data when you have internet connection, and it will be available offline.",
-    },
-    {
-      question: "How accurate are the weather-based packing suggestions?",
-      answer:
-        "We integrate with reliable weather APIs to provide accurate forecasts. Our system considers both current conditions and predicted weather for your travel dates.",
-    },
-    {
-      question: "Can I export my packing lists?",
-      answer:
-        "Yes, you can export your packing lists in various formats including PDF and CSV. This makes it easy to share or print your lists.",
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-green-600/10"></div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-grey-50">
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-grey-600/10"></div>
 
       <div className="relative z-10">
         <nav className="flex justify-between items-center p-6 max-w-7xl mx-auto">
@@ -356,11 +307,35 @@ export default function Contact() {
                   ></textarea>
                 </div>
 
+                {submitStatus.type && (
+                  <div
+                    className={`p-4 rounded-lg ${
+                      submitStatus.type === "success"
+                        ? "bg-green-50 border border-green-200 text-green-800"
+                        : "bg-red-50 border border-red-200 text-red-800"
+                    }`}
+                  >
+                    {submitStatus.message}
+                  </div>
+                )}
+
                 <button
                   type="submit"
-                  className="w-full btn-primary py-4 text-lg font-semibold"
+                  disabled={isSubmitting}
+                  className={`w-full py-4 text-lg font-semibold rounded-lg transition-all ${
+                    isSubmitting
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "btn-primary hover:shadow-lg"
+                  }`}
                 >
-                  Send Message
+                  {isSubmitting ? (
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                      Sending...
+                    </div>
+                  ) : (
+                    "Send Message"
+                  )}
                 </button>
               </form>
             </div>

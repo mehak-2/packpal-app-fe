@@ -104,9 +104,7 @@ const DestinationSelector: React.FC<DestinationSelectorProps> = ({
     }
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const customStyles = {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     control: (provided: any, state: { isFocused: boolean }) => ({
       ...provided,
       borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
@@ -130,7 +128,6 @@ const DestinationSelector: React.FC<DestinationSelectorProps> = ({
         backgroundColor: state.isSelected ? "#3b82f6" : "#f3f4f6",
       },
     }),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     menu: (provided: any) => ({
       ...provided,
       zIndex: 9999,

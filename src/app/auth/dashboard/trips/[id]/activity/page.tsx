@@ -36,9 +36,9 @@ const ActivityLogPage = () => {
   const tripId = params.id as string;
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [activeTab, setActiveTab] = useState<"collaborators" | "activity">(
-    "collaborators"
-  );
+  // const [activeTab, setActiveTab] = useState<"collaborators" | "activity">(
+  //   "collaborators"
+  // );
 
   const { data: tripData, isLoading: tripLoading } =
     useGetTripByIdQuery(tripId);

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCreateTripMutation } from "@/redux/slices/api/trips/trips";
+import Image from "next/image";
 
 export default function CreateTripPage() {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -21,7 +22,7 @@ export default function CreateTripPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const router = useRouter();
-  const [createTrip, { isLoading, error }] = useCreateTripMutation();
+  const [createTrip, { isLoading }] = useCreateTripMutation();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -297,7 +298,7 @@ export default function CreateTripPage() {
                         });
                       }}
                     >
-                      <img
+                      <Image
                         src={dest.image}
                         alt={dest.name}
                         className="w-full h-24 object-cover rounded-lg mb-3"
@@ -581,7 +582,7 @@ export default function CreateTripPage() {
             </button>
 
             <div className="flex space-x-4">
-              <Link href="/auth/dashboard" className="btn-secondary px-6 py-3">
+              <Link href="/auth/dashboard" className="btn-primary px-6 py-3">
                 Cancel
               </Link>
               {currentStep === steps.length ? (

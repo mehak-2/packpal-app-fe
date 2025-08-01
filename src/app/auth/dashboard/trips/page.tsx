@@ -3,8 +3,15 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useGetTripsQuery } from "@/redux/slices/api/trips/trips";
+import { useDispatch } from "react-redux";
+import Image from "next/image";
+import {
+  useGetTripsQuery,
+  tripsApi,
+  useUpdatePackingListMutation,
+} from "@/redux/slices/api/trips/trips";
 import { getDestinationImage } from "@/utils/destinationImages";
+import { AppDispatch } from "@/redux/store";
 
 export default function TripsPage() {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -12,7 +19,71 @@ export default function TripsPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const router = useRouter();
-  const { data: tripsData, isLoading, error } = useGetTripsQuery("");
+  const dispatch = useDispatch<AppDispatch>();
+  const { data: tripsData } = useGetTripsQuery("");
+  const [updatePackingList] = useUpdatePackingListMutation();
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const addDemoPackedItems = async () => {
+    if (!tripsData?.data?.upcoming || tripsData.data.upcoming.length === 0) {
+      alert("No upcoming trips found. Please create a trip first.");
+      return;
+    }
+
+    const firstTrip = tripsData.data.upcoming[0];
+    if (!firstTrip.packingList) {
+      alert(
+        "No packing list found for this trip. Please generate a packing list first."
+      );
+      return;
+    }
+
+    const updatedPackingList = JSON.parse(
+      JSON.stringify(firstTrip.packingList)
+    );
+
+    Object.keys(updatedPackingList).forEach((category) => {
+      const items = updatedPackingList[category];
+      if (Array.isArray(items) && items.length > 0) {
+        items.forEach((item, index) => {
+          if (index < 2) {
+            items[index] = { ...item, packed: true };
+          }
+        });
+      }
+    });
+
+    try {
+      const result = await updatePackingList({
+        id: firstTrip._id,
+        packingList: updatedPackingList,
+      }).unwrap();
+
+      console.log("Demo packing list updated successfully:", result);
+
+      dispatch(
+        tripsApi.util.updateQueryData("getTripById", firstTrip._id, (draft) => {
+          if (draft && typeof draft === "object" && "data" in draft) {
+            (
+              draft as {
+                data: {
+                  packingList: Record<
+                    string,
+                    Array<{ name: string; quantity?: number; packed: boolean }>
+                  >;
+                };
+              }
+            ).data.packingList = updatedPackingList;
+          }
+        })
+      );
+
+      alert("Demo packed items added! Check the progress tracking now.");
+    } catch (error) {
+      console.error("Error adding demo items:", error);
+      alert("Failed to add demo items.");
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -77,35 +148,41 @@ export default function TripsPage() {
     _id: string;
     packingList?: Record<
       string,
-      Array<{
-        name: string;
-        quantity?: number;
-        packed: boolean;
-        isCustom?: boolean;
-      }>
+      Array<{ name: string; quantity?: number; packed: boolean }>
     >;
   }) => {
-    console.log(
-      "Checking packing progress for trip:",
-      trip._id,
-      trip.packingList
-    );
-    if (!trip.packingList) return { packed: 0, total: 0, percentage: 0 };
+    if (!trip.packingList) {
+      return { packed: 0, total: 0, percentage: 0 };
+    }
 
     let packed = 0;
     let total = 0;
 
-    Object.values(trip.packingList).forEach((items) => {
+    const categories = [
+      "clothing",
+      "accessories",
+      "essentials",
+      "electronics",
+      "toiletries",
+      "documents",
+      "activities",
+    ];
+
+    categories.forEach((category) => {
+      const items = trip.packingList?.[category];
       if (Array.isArray(items)) {
-        items.forEach((item) => {
-          total++;
-          if (item.packed) packed++;
-        });
+        items.forEach(
+          (item: { name: string; quantity?: number; packed: boolean }) => {
+            total++;
+            if (item.packed) {
+              packed++;
+            }
+          }
+        );
       }
     });
 
     const percentage = total > 0 ? Math.round((packed / total) * 100) : 0;
-    console.log(`Trip ${trip._id}: ${packed}/${total} (${percentage}%)`);
     return { packed, total, percentage };
   };
 
@@ -118,8 +195,8 @@ export default function TripsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-green-600/5"></div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-50">
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-gray-600/5"></div>
 
       <div className="relative z-10">
         <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
@@ -130,8 +207,8 @@ export default function TripsPage() {
                   href="/auth/dashboard"
                   className="flex items-center space-x-2"
                 >
-                  <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-green-600 rounded-xl flex items-center justify-center">
-                    <span className="text-white font-bold text-xl">P</span>
+                  <div className="w-8 h-8 bg-gradient-to-r from-gray-600 to-gray-800 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">P</span>
                   </div>
                   <span className="text-2xl font-bold gradient-text">
                     PackPal
@@ -141,23 +218,53 @@ export default function TripsPage() {
 
               <div className="flex items-center space-x-4">
                 {/* <button
+                  onClick={addDemoPackedItems}
+                  className="px-3 py-2 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600 transition-colors"
+                >
+                  Demo Progress
+                </button> */}
+                {/* <button
                   onClick={() => {
-                    console.log("=== DASHBOARD DEBUG ===");
+                    console.log("=== PACKING PROGRESS DEBUG ===");
                     console.log("Trips data:", tripsData);
                     console.log("All trips:", allTrips);
                     allTrips.forEach((trip) => {
                       const progress = getPackingProgress(trip);
                       console.log(
-                        `Trip ${trip._id}: ${progress.packed}/${progress.total} (${progress.percentage}%)`
+                        `Trip ${trip._id} (${trip.destination}):`,
+                        `Packing list exists: ${!!trip.packingList}`,
+                        `Categories: ${
+                          trip.packingList
+                            ? Object.keys(trip.packingList).join(", ")
+                            : "none"
+                        }`,
+                        `Progress: ${progress.packed}/${progress.total} (${progress.percentage}%)`
                       );
                     });
                     alert(
-                      `Total trips: ${allTrips.length}\nCheck console for details`
+                      `Debug info logged to console\nTotal trips: ${
+                        allTrips.length
+                      }\nTrips with packing lists: ${
+                        allTrips.filter(
+                          (t) =>
+                            t.packingList &&
+                            Object.keys(t.packingList).length > 0
+                        ).length
+                      }`
                     );
                   }}
-                  className="px-4 py-2 bg-gray-500 text-white rounded-lg text-sm"
+                  className="px-3 py-2 bg-gray-500 text-white rounded-lg text-sm hover:bg-gray-600 transition-colors"
                 >
-                  Debug Data
+                  Debug Progress
+                </button> */}
+                {/* <button
+                  onClick={() => {
+                    refetch();
+                    alert("Data refreshed! Check the progress updates.");
+                  }}
+                  className="px-3 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition-colors"
+                >
+                  Refresh Data
                 </button> */}
                 <Link
                   href="/auth/dashboard/create-trip"
@@ -243,7 +350,70 @@ export default function TripsPage() {
               const allTripsWithPacking = allTrips.filter(
                 (trip) => getPackingProgress(trip).total > 0
               );
-              if (allTripsWithPacking.length === 0) return null;
+
+              if (allTripsWithPacking.length === 0) {
+                const tripsWithPackingLists = allTrips.filter(
+                  (trip) =>
+                    trip.packingList && Object.keys(trip.packingList).length > 0
+                );
+
+                if (tripsWithPackingLists.length > 0) {
+                  return (
+                    <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+                      <div className="flex items-center">
+                        <svg
+                          className="w-5 h-5 text-yellow-600 mr-2"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        <div className="text-yellow-800">
+                          <div className="font-medium mb-1">
+                            {tripsWithPackingLists.length} trip
+                            {tripsWithPackingLists.length > 1 ? "s" : ""} have
+                            packing lists but no items are marked as packed yet.
+                          </div>
+                          <div className="text-sm text-yellow-700">
+                            💡 Tip: Click on items in your packing list to mark
+                            them as packed and see your progress update!
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                return (
+                  <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                    <div className="flex items-center">
+                      <svg
+                        className="w-5 h-5 text-blue-600 mr-2"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      <div className="text-blue-800">
+                        <div className="font-medium mb-1">
+                          No packing lists found for your trips.
+                        </div>
+                        <div className="text-sm text-blue-700">
+                          💡 Tip: Create a trip and generate a packing list to
+                          start tracking your packing progress!
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
 
               const totalPacked = allTripsWithPacking.reduce((sum, trip) => {
                 const progress = getPackingProgress(trip);
@@ -261,72 +431,59 @@ export default function TripsPage() {
                   : 0;
 
               return (
-                <div className="mt-4 p-4 bg-white/70 backdrop-blur-sm rounded-xl border border-white/20">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-lg font-semibold text-gray-800">
-                      Overall Packing Progress
-                    </h3>
-                    <span className="text-sm text-gray-600">
+                <div className="mt-4 p-4 bg-white/70 backdrop-blur-sm rounded-xl border border-white/20 shadow-lg">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center">
+                      <svg
+                        className="w-6 h-6 text-blue-600 mr-2"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <h3 className="text-lg font-semibold text-gray-800">
+                        Overall Packing Progress
+                      </h3>
+                    </div>
+                    <span className="text-sm font-medium text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
                       {totalPacked}/{totalItems} items packed
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div className="w-full bg-gray-200 rounded-full h-4 mb-2">
                     <div
-                      className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-300"
+                      className="bg-gradient-to-r from-blue-500 to-purple-600 h-4 rounded-full transition-all duration-500 shadow-sm"
                       style={{ width: `${overallPercentage}%` }}
                     ></div>
                   </div>
-                  <div className="text-sm text-gray-600 mt-1">
-                    {overallPercentage}% complete across{" "}
-                    {allTripsWithPacking.length} trips
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-600">
+                      {overallPercentage}% complete across{" "}
+                      {allTripsWithPacking.length} trip
+                      {allTripsWithPacking.length > 1 ? "s" : ""}
+                    </span>
+                    {overallPercentage === 100 && (
+                      <span className="text-green-600 font-medium flex items-center">
+                        <svg
+                          className="w-4 h-4 mr-1"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        All packed!
+                      </span>
+                    )}
                   </div>
                 </div>
               );
             })()}
           </div>
 
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="card animate-pulse">
-                  <div className="bg-gray-200 h-48 rounded-lg mb-4"></div>
-                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                  <div className="h-3 bg-gray-200 rounded mb-3"></div>
-                  <div className="h-3 bg-gray-200 rounded"></div>
-                </div>
-              ))}
-            </div>
-          ) : error ? (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg
-                  className="w-8 h-8 text-red-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                Failed to load trips
-              </h3>
-              <p className="text-gray-600 mb-4">
-                There was an error loading your trips. Please try again.
-              </p>
-              <button
-                onClick={() => window.location.reload()}
-                className="btn-primary"
-              >
-                Try Again
-              </button>
-            </div>
-          ) : filteredTrips.length === 0 ? (
+          {filteredTrips.length === 0 ? (
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg
@@ -369,7 +526,7 @@ export default function TripsPage() {
                   className="card group cursor-pointer hover:scale-105 transition-transform"
                 >
                   <div className="relative mb-4">
-                    <img
+                    <Image
                       src={getDestinationImage(trip.destination, trip.country)}
                       alt={trip.destination}
                       className="w-full h-48 object-cover rounded-lg"
@@ -387,13 +544,18 @@ export default function TripsPage() {
                         {getStatusText(trip.startDate)}
                       </span>
                       {getPackingProgress(trip).total > 0 && (
-                        <Link
-                          href={`/auth/dashboard/trips/${trip._id}/packing-list`}
-                          onClick={(e) => e.stopPropagation()}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            router.push(
+                              `/auth/dashboard/trips/${trip._id}/packing-list`
+                            );
+                          }}
                           className="px-2 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-medium text-blue-600 hover:bg-blue-50 transition-colors"
                         >
                           📦
-                        </Link>
+                        </button>
                       )}
                     </div>
                   </div>
@@ -414,21 +576,68 @@ export default function TripsPage() {
                   {(() => {
                     const progress = getPackingProgress(trip);
                     return progress.total > 0 ? (
-                      <div className="mb-3">
-                        <div className="flex justify-between items-center text-sm text-gray-600 mb-1">
-                          <span className="font-medium">Packing Progress</span>
-                          <span className="text-gray-500">
+                      <div className="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                        <div className="flex justify-between items-center text-sm text-gray-700 mb-2">
+                          <span className="font-semibold flex items-center">
+                            <svg
+                              className="w-4 h-4 mr-1 text-blue-600"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Packing Progress
+                          </span>
+                          <span className="font-medium text-gray-600 bg-white px-2 py-1 rounded-full text-xs">
                             {progress.packed}/{progress.total}
                           </span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
                           <div
-                            className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
+                            className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-500 shadow-sm"
                             style={{ width: `${progress.percentage}%` }}
                           ></div>
                         </div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {progress.percentage}% complete
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-gray-600">
+                            {progress.percentage}% complete
+                          </span>
+                          {progress.percentage === 100 && (
+                            <span className="text-green-600 font-medium flex items-center">
+                              <svg
+                                className="w-3 h-3 mr-1"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                              Ready!
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ) : trip.packingList &&
+                      Object.keys(trip.packingList).length > 0 ? (
+                      <div className="mb-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                        <div className="flex items-center text-sm text-yellow-700">
+                          <svg
+                            className="w-4 h-4 mr-1"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          <span className="font-medium">
+                            Start packing your items
+                          </span>
                         </div>
                       </div>
                     ) : null;

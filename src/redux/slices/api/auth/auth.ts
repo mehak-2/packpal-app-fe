@@ -56,6 +56,37 @@ export const authApi = createApi({
         return result;
       },
     }),
+    updateUser: builder.mutation({
+      queryFn: async (body, api, extraOptions) => {
+        const result = await authenticatedBaseQuery(
+          { url: "/auth/update-user", method: "PUT", body },
+          api,
+          extraOptions
+        );
+        return result;
+      },
+    }),
+    updatePreferences: builder.mutation({
+      queryFn: async (body, api, extraOptions) => {
+        const result = await authenticatedBaseQuery(
+          { url: "/auth/update-preferences", method: "PUT", body },
+          api,
+          extraOptions
+        );
+        return result;
+      },
+    }),
+
+    getMe: builder.query({
+      queryFn: async (args, api, extraOptions) => {
+        const result = await authenticatedBaseQuery(
+          { url: "/auth/me" },
+          api,
+          extraOptions
+        );
+        return result;
+      },
+    }),
   }),
 });
 
@@ -64,4 +95,7 @@ export const {
   useRegisterMutation,
   useLogoutMutation,
   useCompleteOnboardingMutation,
+  useUpdateUserMutation,
+  useUpdatePreferencesMutation,
+  useGetMeQuery,
 } = authApi;

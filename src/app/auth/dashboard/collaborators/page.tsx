@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { API_CONFIG } from "../../../../config/api";
 
 interface Trip {
@@ -322,8 +323,8 @@ const CollaboratorsPage = () => {
   const selectedTripData = trips.find((trip) => trip._id === selectedTrip);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-green-600/5"></div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-50">
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-gray-600/5"></div>
 
       <div className="relative z-10">
         <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
@@ -334,28 +335,16 @@ const CollaboratorsPage = () => {
                   href="/auth/dashboard"
                   className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
                 >
-                  <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-green-600 rounded-xl flex items-center justify-center">
-                    <svg
-                      className="w-5 h-5 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 19l-7-7 7-7"
-                      />
-                    </svg>
+                  <div className="w-8 h-8 bg-gradient-to-r from-gray-600 to-gray-800 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">P</span>
                   </div>
-                  <span className="text-2xl font-bold gradient-text">
+                  <span className="text-xl font-bold gradient-text">
                     PackPal
                   </span>
                 </Link>
               </div>
               <div className="flex items-center space-x-3">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-gray-600 bg-clip-text text-transparent">
                   Collaborators
                 </h1>
               </div>
@@ -378,8 +367,8 @@ const CollaboratorsPage = () => {
             <div
               className={`mb-6 p-4 rounded-xl border ${
                 message.includes("successfully")
-                  ? "bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border-green-200"
-                  : "bg-gradient-to-r from-red-50 to-pink-50 text-red-700 border-red-200"
+                  ? "bg-gradient-to-r from-green-50 to-gray-50 text-green-700 border-green-200"
+                  : "bg-gradient-to-r from-red-50 to-gray-50 text-red-700 border-red-200"
               }`}
             >
               <div className="flex items-center">
@@ -536,7 +525,7 @@ const CollaboratorsPage = () => {
                         </p>
                         <Link
                           href="/auth/dashboard/create-trip"
-                          className="px-8 py-4 bg-gradient-to-r from-blue-600 to-green-600 text-white rounded-xl hover:from-blue-700 hover:to-green-700 transition-all duration-200 shadow-lg text-lg font-semibold"
+                          className="px-8 py-4 bg-gradient-to-r from-blue-600 to-gray-600 text-white rounded-xl hover:from-blue-700 hover:to-gray-700 transition-all duration-200 shadow-lg text-lg font-semibold"
                         >
                           Create Trip
                         </Link>
@@ -563,7 +552,7 @@ const CollaboratorsPage = () => {
                         </div>
 
                         {selectedTripData && (
-                          <div className="bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-xl p-6">
+                          <div className="bg-gradient-to-r from-blue-50 to-gray-50 border border-blue-200 rounded-xl p-6">
                             <h4 className="font-bold text-gray-900 mb-3 flex items-center">
                               <svg
                                 className="w-5 h-5 mr-2 text-blue-600"
@@ -632,7 +621,7 @@ const CollaboratorsPage = () => {
                               disabled={
                                 isLoading || !email.trim() || !selectedTrip
                               }
-                              className="px-8 py-3 bg-gradient-to-r from-blue-600 to-green-600 text-white rounded-xl hover:from-blue-700 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg font-semibold"
+                              className="px-8 py-3 bg-gradient-to-r from-blue-600 to-gray-600 text-white rounded-xl hover:from-blue-700 hover:to-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg font-semibold"
                             >
                               {isLoading ? "Sending..." : "Send Invite"}
                             </button>
@@ -672,9 +661,9 @@ const CollaboratorsPage = () => {
                                     className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-blue-50 border border-gray-200 rounded-xl hover:border-blue-300 transition-all duration-200 hover:shadow-md"
                                   >
                                     <div className="flex items-center space-x-3">
-                                      <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-green-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
+                                      <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-gray-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
                                         {user.avatar ? (
-                                          <img
+                                          <Image
                                             src={user.avatar}
                                             alt={user.name}
                                             className="w-10 h-10 rounded-full object-cover"
@@ -731,7 +720,7 @@ const CollaboratorsPage = () => {
 
                   {receivedInvitations.length === 0 ? (
                     <div className="text-center py-16">
-                      <div className="w-24 h-24 bg-gradient-to-r from-blue-100 to-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <div className="w-24 h-24 bg-gradient-to-r from-blue-100 to-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
                         <svg
                           className="w-12 h-12 text-blue-600"
                           fill="none"
@@ -844,7 +833,7 @@ const CollaboratorsPage = () => {
 
                   {sentInvitations.length === 0 ? (
                     <div className="text-center py-16">
-                      <div className="w-24 h-24 bg-gradient-to-r from-blue-100 to-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <div className="w-24 h-24 bg-gradient-to-r from-blue-100 to-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
                         <svg
                           className="w-12 h-12 text-blue-600"
                           fill="none"
@@ -875,7 +864,7 @@ const CollaboratorsPage = () => {
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-4">
-                              <div className="w-12 h-12 bg-gradient-to-r from-green-600 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                              <div className="w-12 h-12 bg-gradient-to-r from-gray-600 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
                                 {getInitials(
                                   invitation.inviteeId?.name || "Unknown User"
                                 )}
@@ -914,7 +903,7 @@ const CollaboratorsPage = () => {
                                   onClick={() =>
                                     handleResendInvite(invitation._id)
                                   }
-                                  className="px-6 py-2 bg-gradient-to-r from-blue-600 to-green-600 text-white rounded-xl hover:from-blue-700 hover:to-green-700 transition-all duration-200 shadow-lg font-semibold"
+                                  className="px-6 py-2 bg-gradient-to-r from-blue-600 to-gray-600 text-white rounded-xl hover:from-blue-700 hover:to-gray-700 transition-all duration-200 shadow-lg font-semibold"
                                 >
                                   Resend
                                 </button>

@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   useGetTripByIdQuery,
   useDeleteTripMutation,
-  useUpdatePackingListMutation,
+  // useUpdatePackingListMutation,
   useRegeneratePackingListMutation,
   useCreateTemplateMutation,
   tripsApi,
@@ -132,7 +133,8 @@ const TripDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => {
     error,
   } = useGetTripByIdQuery(tripId!, { skip: !tripId });
   const [deleteTrip, { isLoading: isDeleting }] = useDeleteTripMutation();
-  const [updatePackingList] = useUpdatePackingListMutation();
+
+  // const [updatePackingList] = useUpdatePackingListMutation();
   const [regeneratePackingList, { isLoading: isRegenerating }] =
     useRegeneratePackingListMutation();
   const [createTemplate] = useCreateTemplateMutation();
@@ -482,10 +484,10 @@ const TripDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => {
         ];
       }
 
-      const result = await updatePackingList({
-        id: tripId!,
-        packingList: updatedPackingList,
-      }).unwrap();
+      // const result = await updatePackingList({
+      //   id: tripId!,
+      //   packingList: updatedPackingList,
+      // }).unwrap();
 
       dispatch(
         tripsApi.util.updateQueryData("getTrips", "", (draft) => {
@@ -548,10 +550,10 @@ const TripDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => {
         };
       }
 
-      const result = await updatePackingList({
-        id: tripId!,
-        packingList: updatedPackingList,
-      }).unwrap();
+      // const result = await updatePackingList({
+      //   id: tripId!,
+      //   packingList: updatedPackingList,
+      // }).unwrap();
 
       dispatch(
         tripsApi.util.updateQueryData("getTrips", "", (draft) => {
@@ -591,124 +593,124 @@ const TripDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => {
     }
   };
 
-  const handleDeleteItem = async (category: string, index: number) => {
-    try {
-      const updatedPackingList = JSON.parse(
-        JSON.stringify(trip?.packingList || {})
-      );
-      const categoryKey = category as keyof typeof updatedPackingList;
+  // const handleDeleteItem = async (category: string, index: number) => {
+  //   try {
+  //     const updatedPackingList = JSON.parse(
+  //       JSON.stringify(trip?.packingList || {})
+  //     );
+  //     const categoryKey = category as keyof typeof updatedPackingList;
 
-      if (updatedPackingList[categoryKey]) {
-        (
-          updatedPackingList[categoryKey] as Array<{
-            name: string;
-            quantity?: number;
-            packed: boolean;
-            isCustom?: boolean;
-          }>
-        ).splice(index, 1);
-      }
+  //     if (updatedPackingList[categoryKey]) {
+  //       (
+  //         updatedPackingList[categoryKey] as Array<{
+  //           name: string;
+  //           quantity?: number;
+  //           packed: boolean;
+  //           isCustom?: boolean;
+  //         }>
+  //       ).splice(index, 1);
+  //     }
 
-      const result = await updatePackingList({
-        id: tripId!,
-        packingList: updatedPackingList,
-      }).unwrap();
+  //     await updatePackingList({
+  //       id: tripId!,
+  //       packingList: updatedPackingList,
+  //     }).unwrap();
 
-      dispatch(
-        tripsApi.util.updateQueryData("getTrips", "", (draft) => {
-          if (draft?.data) {
-            if (
-              draft.data.upcoming &&
-              draft.data.upcoming.find((t: { _id: string }) => t._id === tripId)
-            ) {
-              const upcomingIndex = draft.data.upcoming.findIndex(
-                (t: { _id: string }) => t._id === tripId
-              );
-              if (upcomingIndex !== -1) {
-                draft.data.upcoming[upcomingIndex].packingList =
-                  updatedPackingList;
-              }
-            } else if (
-              draft.data.past &&
-              draft.data.past.find((t: { _id: string }) => t._id === tripId)
-            ) {
-              const pastIndex = draft.data.past.findIndex(
-                (t: { _id: string }) => t._id === tripId
-              );
-              if (pastIndex !== -1) {
-                draft.data.past[pastIndex].packingList = updatedPackingList;
-              }
-            }
-          }
-        })
-      );
-    } catch (error) {
-      console.error("Failed to delete item:", error);
-    }
-  };
+  //     dispatch(
+  //       tripsApi.util.updateQueryData("getTrips", "", (draft) => {
+  //         if (draft?.data) {
+  //           if (
+  //             draft.data.upcoming &&
+  //             draft.data.upcoming.find((t: { _id: string }) => t._id === tripId)
+  //           ) {
+  //             const upcomingIndex = draft.data.upcoming.findIndex(
+  //               (t: { _id: string }) => t._id === tripId
+  //             );
+  //             if (upcomingIndex !== -1) {
+  //               draft.data.upcoming[upcomingIndex].packingList =
+  //                 updatedPackingList;
+  //             }
+  //           } else if (
+  //             draft.data.past &&
+  //             draft.data.past.find((t: { _id: string }) => t._id === tripId)
+  //           ) {
+  //             const pastIndex = draft.data.past.findIndex(
+  //               (t: { _id: string }) => t._id === tripId
+  //             );
+  //             if (pastIndex !== -1) {
+  //               draft.data.past[pastIndex].packingList = updatedPackingList;
+  //             }
+  //           }
+  //         }
+  //       })
+  //     );
+  //   } catch (error) {
+  //     console.error("Failed to delete item:", error);
+  //   }
+  // };
 
-  const handleTogglePacked = async (category: string, index: number) => {
-    try {
-      const updatedPackingList = JSON.parse(
-        JSON.stringify(trip?.packingList || {})
-      );
-      const categoryKey = category as keyof typeof updatedPackingList;
+  // const handleTogglePacked = async (category: string, index: number) => {
+  //   try {
+  //     const updatedPackingList = JSON.parse(
+  //       JSON.stringify(trip?.packingList || {})
+  //     );
+  //     const categoryKey = category as keyof typeof updatedPackingList;
 
-      if (updatedPackingList[categoryKey]) {
-        (
-          updatedPackingList[categoryKey] as Array<{
-            name: string;
-            quantity?: number;
-            packed: boolean;
-            isCustom?: boolean;
-          }>
-        )[index].packed = !(
-          updatedPackingList[categoryKey] as Array<{
-            name: string;
-            quantity?: number;
-            packed: boolean;
-            isCustom?: boolean;
-          }>
-        )[index].packed;
-      }
+  //     if (updatedPackingList[categoryKey]) {
+  //       (
+  //         updatedPackingList[categoryKey] as Array<{
+  //           name: string;
+  //           quantity?: number;
+  //           packed: boolean;
+  //           isCustom?: boolean;
+  //         }>
+  //       )[index].packed = !(
+  //         updatedPackingList[categoryKey] as Array<{
+  //           name: string;
+  //           quantity?: number;
+  //           packed: boolean;
+  //           isCustom?: boolean;
+  //         }>
+  //       )[index].packed;
+  //     }
 
-      const result = await updatePackingList({
-        id: tripId!,
-        packingList: updatedPackingList,
-      }).unwrap();
+  //     await updatePackingList({
+  //       id: tripId!,
+  //       packingList: updatedPackingList,
+  //     }).unwrap();
 
-      dispatch(
-        tripsApi.util.updateQueryData("getTrips", "", (draft) => {
-          if (draft?.data) {
-            if (
-              draft.data.upcoming &&
-              draft.data.upcoming.find((t: { _id: string }) => t._id === tripId)
-            ) {
-              const upcomingIndex = draft.data.upcoming.findIndex(
-                (t: { _id: string }) => t._id === tripId
-              );
-              if (upcomingIndex !== -1) {
-                draft.data.upcoming[upcomingIndex].packingList =
-                  updatedPackingList;
-              }
-            } else if (
-              draft.data.past &&
-              draft.data.past.find((t: { _id: string }) => t._id === tripId)
-            ) {
-              const pastIndex = draft.data.past.findIndex(
-                (t: { _id: string }) => t._id === tripId
-              );
-              if (pastIndex !== -1) {
-                draft.data.past[pastIndex].packingList = updatedPackingList;
-              }
-            }
-          }
-        })
-      );
-    } catch (error) {
-      console.error("Failed to toggle packed status:", error);
-    }
-  };
+  //     dispatch(
+  //       tripsApi.util.updateQueryData("getTrips", "", (draft) => {
+  //         if (draft?.data) {
+  //           if (
+  //             draft.data.upcoming &&
+  //             draft.data.upcoming.find((t: { _id: string }) => t._id === tripId)
+  //           ) {
+  //             const upcomingIndex = draft.data.upcoming.findIndex(
+  //               (t: { _id: string }) => t._id === tripId
+  //             );
+  //             if (upcomingIndex !== -1) {
+  //               draft.data.upcoming[upcomingIndex].packingList =
+  //                 updatedPackingList;
+  //             }
+  //           } else if (
+  //             draft.data.past &&
+  //             draft.data.past.find((t: { _id: string }) => t._id === tripId)
+  //           ) {
+  //             const pastIndex = draft.data.past.findIndex(
+  //               (t: { _id: string }) => t._id === tripId
+  //             );
+  //             if (pastIndex !== -1) {
+  //               draft.data.past[pastIndex].packingList = updatedPackingList;
+  //             }
+  //           }
+  //         }
+  //       })
+  //     );
+  //   } catch (error) {
+  //     console.error("Failed to toggle packed status:", error);
+  //   }
+  // };
 
   const handleSaveAsTemplate = async () => {
     if (!templateName.trim()) return;
@@ -730,27 +732,27 @@ const TripDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => {
     }
   };
 
-  const openEditModal = (
-    item: {
-      name: string;
-      quantity?: number;
-      packed: boolean;
-      isCustom?: boolean;
-    },
-    category: string,
-    index: number
-  ) => {
-    setEditingItem({
-      name: item.name,
-      quantity: item.quantity,
-      packed: item.packed,
-      isCustom: item.isCustom,
-      category: category,
-    });
-    setEditingCategory(category);
-    setEditingItemIndex(index);
-    setShowEditItemModal(true);
-  };
+  // const openEditModal = (
+  //   item: {
+  //     name: string;
+  //     quantity?: number;
+  //     packed: boolean;
+  //     isCustom?: boolean;
+  //   },
+  //   category: string,
+  //   index: number
+  // ) => {
+  //   setEditingItem({
+  //     name: item.name,
+  //     quantity: item.quantity,
+  //     packed: item.packed,
+  //     isCustom: item.isCustom,
+  //     category: category,
+  //   });
+  //   setEditingCategory(category);
+  //   setEditingItemIndex(index);
+  //   setShowEditItemModal(true);
+  // };
 
   const getPackedCount = () => {
     console.log("getPackedCount called, trip packingList:", trip?.packingList);
@@ -823,15 +825,15 @@ const TripDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => {
     );
   }
 
-  const allPackingItems = [
-    ...(trip.packingList?.clothing || []),
-    ...(trip.packingList?.accessories || []),
-    ...(trip.packingList?.essentials || []),
-    ...(trip.packingList?.electronics || []),
-    ...(trip.packingList?.toiletries || []),
-    ...(trip.packingList?.documents || []),
-    ...(trip.packingList?.activities || []),
-  ];
+  // const   allPackingItems = [
+  //   ...(trip.packingList?.clothing || []),
+  //   ...(trip.packingList?.accessories || []),
+  //   ...(trip.packingList?.essentials || []),
+  //   ...(trip.packingList?.electronics || []),
+  //   ...(trip.packingList?.toiletries || []),
+  //   ...(trip.packingList?.documents || []),
+  //   ...(trip.packingList?.activities || []),
+  // ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -898,7 +900,7 @@ const TripDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => {
         <div className="space-y-8">
           <div className="bg-white/70 backdrop-blur-sm border border-white/20 rounded-2xl overflow-hidden shadow-xl">
             <div className="relative">
-              <img
+              <Image
                 src={getDestinationImage(
                   trip.destination,
                   trip.destinationInfo

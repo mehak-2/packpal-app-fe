@@ -239,19 +239,44 @@ class GeoDBService {
 
       return response.data.data;
     } catch (error: unknown) {
-      const axiosError = error as {
-        response?: { status: number; data: unknown };
-      };
-      console.error(
-        "Error searching cities:",
-        axiosError?.response?.data || error
-      );
+      // Improved error handling
+      let errorMessage = "Unknown error";
+      let statusCode: number | undefined;
+
+      if (error && typeof error === "object") {
+        if ("response" in error && error.response) {
+          const response = error.response as {
+            status: number;
+            data?: { message?: string };
+            statusText?: string;
+          };
+          statusCode = response.status;
+          errorMessage =
+            response.data?.message ||
+            response.statusText ||
+            "API request failed";
+        } else if ("message" in error) {
+          errorMessage = (error as { message: string }).message;
+        } else if ("code" in error) {
+          errorMessage = `Network error: ${(error as { code: string }).code}`;
+        }
+      }
+
+      console.error("Error searching cities:", {
+        message: errorMessage,
+        status: statusCode,
+        error: error,
+      });
 
       // Check for specific error types
-      if (axiosError?.response?.status === 403) {
+      if (statusCode === 403) {
         console.warn("API key might be invalid. Using fallback data.");
-      } else if (axiosError?.response?.status === 429) {
+      } else if (statusCode === 429) {
         console.warn("Rate limit exceeded. Using fallback data.");
+      } else if (statusCode === 401) {
+        console.warn("Unauthorized request. Using fallback data.");
+      } else {
+        console.warn("API request failed. Using fallback data.");
       }
 
       // Fallback to static data on API error
@@ -282,19 +307,44 @@ class GeoDBService {
 
       return response.data.data;
     } catch (error: unknown) {
-      const axiosError = error as {
-        response?: { status: number; data: unknown };
-      };
-      console.error(
-        "Error fetching popular cities:",
-        axiosError?.response?.data || error
-      );
+      // Improved error handling
+      let errorMessage = "Unknown error";
+      let statusCode: number | undefined;
+
+      if (error && typeof error === "object") {
+        if ("response" in error && error.response) {
+          const response = error.response as {
+            status: number;
+            data?: { message?: string };
+            statusText?: string;
+          };
+          statusCode = response.status;
+          errorMessage =
+            response.data?.message ||
+            response.statusText ||
+            "API request failed";
+        } else if ("message" in error) {
+          errorMessage = (error as { message: string }).message;
+        } else if ("code" in error) {
+          errorMessage = `Network error: ${(error as { code: string }).code}`;
+        }
+      }
+
+      console.error("Error fetching popular cities:", {
+        message: errorMessage,
+        status: statusCode,
+        error: error,
+      });
 
       // Check for specific error types
-      if (axiosError?.response?.status === 403) {
+      if (statusCode === 403) {
         console.warn("API key might be invalid. Using fallback data.");
-      } else if (axiosError?.response?.status === 429) {
+      } else if (statusCode === 429) {
         console.warn("Rate limit exceeded. Using fallback data.");
+      } else if (statusCode === 401) {
+        console.warn("Unauthorized request. Using fallback data.");
+      } else {
+        console.warn("API request failed. Using fallback data.");
       }
 
       // Fallback to static data on API error

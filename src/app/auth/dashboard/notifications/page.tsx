@@ -1,13 +1,19 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   useGetNotificationsQuery,
   useMarkNotificationAsReadMutation,
   useMarkAllNotificationsAsReadMutation,
   useDeleteNotificationMutation,
+  useGetReminderSettingsQuery,
+  useUpdateReminderSettingsMutation,
 } from "@/redux/slices/api/notifications/notifications";
+import {
+  useUpdateUserMutation,
+  useGetMeQuery,
+} from "@/redux/slices/api/auth/auth";
 
 interface Notification {
   _id: string;
@@ -24,10 +30,42 @@ interface Notification {
   };
 }
 
+interface NotificationSettings {
+  emailNotifications: boolean;
+  pushNotifications: boolean;
+  tripReminderDays: number;
+  tripReminderTime: string;
+  packingReminderDays: number;
+  packingReminderTime: string;
+  weatherUpdates: boolean;
+  collaborationUpdates: boolean;
+}
+
+interface UserData {
+  notifications: boolean;
+}
+
 const NotificationsPage = () => {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
+  const [activeTab, setActiveTab] = useState<"notifications" | "settings">(
+    "notifications"
+  );
+  const [notificationSettings, setNotificationSettings] =
+    useState<NotificationSettings>({
+      emailNotifications: true,
+      pushNotifications: true,
+      tripReminderDays: 1,
+      tripReminderTime: "09:00",
+      packingReminderDays: 2,
+      packingReminderTime: "18:00",
+      weatherUpdates: true,
+      collaborationUpdates: true,
+    });
+  const [globalNotificationsEnabled, setGlobalNotificationsEnabled] =
+    useState(false);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(false);
 
   const { data: notificationsData, isLoading } = useGetNotificationsQuery({
     page: currentPage,
@@ -38,9 +76,71 @@ const NotificationsPage = () => {
   const [markAsRead] = useMarkNotificationAsReadMutation();
   const [markAllAsRead] = useMarkAllNotificationsAsReadMutation();
   const [deleteNotification] = useDeleteNotificationMutation();
+  const [updateUser] = useUpdateUserMutation();
+  const [updateReminderSettings] = useUpdateReminderSettingsMutation();
+
+  const { data: userData } = useGetMeQuery(undefined);
+  const { data: reminderSettingsData } = useGetReminderSettingsQuery(undefined);
 
   const notifications = notificationsData?.data?.notifications || [];
   const totalPages = notificationsData?.data?.totalPages || 1;
+
+  useEffect(() => {
+    if (
+      userData &&
+      typeof userData === "object" &&
+      "data" in userData &&
+      userData.data &&
+      typeof userData.data === "object" &&
+      "notifications" in userData.data
+    ) {
+      setGlobalNotificationsEnabled(
+        (userData.data as UserData).notifications || false
+      );
+    }
+  }, [userData]);
+
+  useEffect(() => {
+    if (
+      reminderSettingsData &&
+      typeof reminderSettingsData === "object" &&
+      "data" in reminderSettingsData &&
+      reminderSettingsData.data
+    ) {
+      setNotificationSettings(
+        reminderSettingsData.data as NotificationSettings
+      );
+    }
+  }, [reminderSettingsData]);
+
+  const handleGlobalNotificationToggle = async () => {
+    try {
+      setIsLoadingSettings(true);
+      await updateUser({ notifications: !globalNotificationsEnabled }).unwrap();
+      setGlobalNotificationsEnabled(!globalNotificationsEnabled);
+    } catch (error) {
+      console.error("Error updating global notification setting:", error);
+    } finally {
+      setIsLoadingSettings(false);
+    }
+  };
+
+  const handleSettingChange = async (
+    setting: keyof NotificationSettings,
+    value: boolean | number | string
+  ) => {
+    try {
+      setIsLoadingSettings(true);
+      const updatedSettings = { ...notificationSettings, [setting]: value };
+
+      await updateReminderSettings(updatedSettings).unwrap();
+      setNotificationSettings(updatedSettings);
+    } catch (error) {
+      console.error("Error updating notification setting:", error);
+    } finally {
+      setIsLoadingSettings(false);
+    }
+  };
 
   const getNotificationIcon = (type: string, icon?: string) => {
     if (icon) {
@@ -291,6 +391,405 @@ const NotificationsPage = () => {
     }
   };
 
+  const renderNotificationsTab = () => (
+    <div className="space-y-6">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">
+            Your Notifications
+          </h2>
+          <div className="flex space-x-2">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={showUnreadOnly}
+                onChange={(e) => setShowUnreadOnly(e.target.checked)}
+                className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <span className="ml-2 text-sm text-gray-700">Unread only</span>
+            </label>
+            <button
+              onClick={handleMarkAllAsRead}
+              className="text-sm text-blue-600 hover:text-blue-800"
+            >
+              Mark all as read
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="text-center py-8">
+          <div className="text-gray-500">Loading notifications...</div>
+        </div>
+      ) : notifications.length === 0 ? (
+        <div className="text-center py-8">
+          <div className="text-gray-500">
+            {showUnreadOnly
+              ? "No unread notifications"
+              : "No notifications yet"}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {notifications.map((notification: Notification) => (
+            <div
+              key={notification._id}
+              className={`bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer transition-colors ${
+                notification.read ? "opacity-75" : "border-blue-300 bg-blue-50"
+              }`}
+              onClick={() => handleNotificationClick(notification)}
+            >
+              <div className="flex items-start space-x-3">
+                <div
+                  className={`flex-shrink-0 ${
+                    notification.read ? "text-gray-400" : "text-blue-600"
+                  }`}
+                >
+                  {getNotificationIcon(notification.type, notification.icon)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3
+                        className={`text-sm font-medium ${
+                          notification.read ? "text-gray-900" : "text-blue-900"
+                        }`}
+                      >
+                        {notification.title}
+                      </h3>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {notification.message}
+                      </p>
+                      {notification.tripId && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Trip: {notification.tripId.destination},{" "}
+                          {notification.tripId.country}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs text-gray-500">
+                        {formatTimestamp(notification.createdAt)}
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteNotification(notification._id);
+                        }}
+                        className="text-red-600 hover:text-red-800 text-sm"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex justify-center space-x-2 mt-6">
+          <button
+            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+            disabled={currentPage === 1}
+            className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <span className="px-3 py-1 text-sm text-gray-600">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={() =>
+              setCurrentPage(Math.min(totalPages, currentPage + 1))
+            }
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderSettingsTab = () => (
+    <div className="space-y-6">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-6">
+          Notification Settings
+        </h2>
+
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-md font-medium text-gray-900">
+                Global Notifications
+              </h3>
+              <p className="text-sm text-gray-600">
+                Enable or disable all notifications
+              </p>
+            </div>
+            <button
+              onClick={handleGlobalNotificationToggle}
+              disabled={isLoadingSettings}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                globalNotificationsEnabled ? "bg-blue-500" : "bg-gray-200"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  globalNotificationsEnabled ? "translate-x-6" : "translate-x-1"
+                }`}
+              ></span>
+            </button>
+          </div>
+
+          <div className="border-t pt-6">
+            <h3 className="text-md font-medium text-gray-900 mb-4">
+              Notification Types
+            </h3>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-800">
+                    Email Notifications
+                  </h4>
+                  <p className="text-xs text-gray-600">
+                    Receive notifications via email
+                  </p>
+                </div>
+                <button
+                  onClick={() =>
+                    handleSettingChange(
+                      "emailNotifications",
+                      !notificationSettings.emailNotifications
+                    )
+                  }
+                  disabled={isLoadingSettings || !globalNotificationsEnabled}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    notificationSettings.emailNotifications &&
+                    globalNotificationsEnabled
+                      ? "bg-blue-500"
+                      : "bg-gray-200"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      notificationSettings.emailNotifications &&
+                      globalNotificationsEnabled
+                        ? "translate-x-6"
+                        : "translate-x-1"
+                    }`}
+                  ></span>
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-800">
+                    Push Notifications
+                  </h4>
+                  <p className="text-xs text-gray-600">
+                    Receive notifications in the app
+                  </p>
+                </div>
+                <button
+                  onClick={() =>
+                    handleSettingChange(
+                      "pushNotifications",
+                      !notificationSettings.pushNotifications
+                    )
+                  }
+                  disabled={isLoadingSettings || !globalNotificationsEnabled}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    notificationSettings.pushNotifications &&
+                    globalNotificationsEnabled
+                      ? "bg-blue-500"
+                      : "bg-gray-200"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      notificationSettings.pushNotifications &&
+                      globalNotificationsEnabled
+                        ? "translate-x-6"
+                        : "translate-x-1"
+                    }`}
+                  ></span>
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-800">
+                    Weather Updates
+                  </h4>
+                  <p className="text-xs text-gray-600">
+                    Get weather updates for your trips
+                  </p>
+                </div>
+                <button
+                  onClick={() =>
+                    handleSettingChange(
+                      "weatherUpdates",
+                      !notificationSettings.weatherUpdates
+                    )
+                  }
+                  disabled={isLoadingSettings || !globalNotificationsEnabled}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    notificationSettings.weatherUpdates &&
+                    globalNotificationsEnabled
+                      ? "bg-blue-500"
+                      : "bg-gray-200"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      notificationSettings.weatherUpdates &&
+                      globalNotificationsEnabled
+                        ? "translate-x-6"
+                        : "translate-x-1"
+                    }`}
+                  ></span>
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-800">
+                    Collaboration Updates
+                  </h4>
+                  <p className="text-xs text-gray-600">
+                    Get updates about trip collaborations
+                  </p>
+                </div>
+                <button
+                  onClick={() =>
+                    handleSettingChange(
+                      "collaborationUpdates",
+                      !notificationSettings.collaborationUpdates
+                    )
+                  }
+                  disabled={isLoadingSettings || !globalNotificationsEnabled}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    notificationSettings.collaborationUpdates &&
+                    globalNotificationsEnabled
+                      ? "bg-blue-500"
+                      : "bg-gray-200"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      notificationSettings.collaborationUpdates &&
+                      globalNotificationsEnabled
+                        ? "translate-x-6"
+                        : "translate-x-1"
+                    }`}
+                  ></span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t pt-6">
+            <h3 className="text-md font-medium text-gray-900 mb-4">
+              Reminder Settings
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <h4 className="text-sm font-medium text-gray-800">
+                  Trip Reminders
+                </h4>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">
+                    Days before trip
+                  </label>
+                  <select
+                    value={notificationSettings.tripReminderDays}
+                    onChange={(e) =>
+                      handleSettingChange(
+                        "tripReminderDays",
+                        parseInt(e.target.value)
+                      )
+                    }
+                    disabled={isLoadingSettings || !globalNotificationsEnabled}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                  >
+                    <option value={1}>1 day</option>
+                    <option value={2}>2 days</option>
+                    <option value={3}>3 days</option>
+                    <option value={7}>1 week</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">
+                    Time
+                  </label>
+                  <input
+                    type="time"
+                    value={notificationSettings.tripReminderTime}
+                    onChange={(e) =>
+                      handleSettingChange("tripReminderTime", e.target.value)
+                    }
+                    disabled={isLoadingSettings || !globalNotificationsEnabled}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="text-sm font-medium text-gray-800">
+                  Packing Reminders
+                </h4>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">
+                    Days before trip
+                  </label>
+                  <select
+                    value={notificationSettings.packingReminderDays}
+                    onChange={(e) =>
+                      handleSettingChange(
+                        "packingReminderDays",
+                        parseInt(e.target.value)
+                      )
+                    }
+                    disabled={isLoadingSettings || !globalNotificationsEnabled}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                  >
+                    <option value={1}>1 day</option>
+                    <option value={2}>2 days</option>
+                    <option value={3}>3 days</option>
+                    <option value={7}>1 week</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">
+                    Time
+                  </label>
+                  <input
+                    type="time"
+                    value={notificationSettings.packingReminderTime}
+                    onChange={(e) =>
+                      handleSettingChange("packingReminderTime", e.target.value)
+                    }
+                    disabled={isLoadingSettings || !globalNotificationsEnabled}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm border-b">
@@ -324,130 +823,34 @@ const NotificationsPage = () => {
       </nav>
 
       <main className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Your Notifications
-            </h2>
-            <div className="flex space-x-2">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={showUnreadOnly}
-                  onChange={(e) => setShowUnreadOnly(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <span className="ml-2 text-sm text-gray-700">Unread only</span>
-              </label>
-              <button
-                onClick={handleMarkAllAsRead}
-                className="text-sm text-blue-600 hover:text-blue-800"
-              >
-                Mark all as read
-              </button>
-            </div>
+        <div className="mb-6">
+          <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
+            <button
+              onClick={() => setActiveTab("notifications")}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                activeTab === "notifications"
+                  ? "bg-white text-blue-600 shadow-sm"
+                  : "text-gray-600 hover:text-gray-800"
+              }`}
+            >
+              Notifications
+            </button>
+            <button
+              onClick={() => setActiveTab("settings")}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                activeTab === "settings"
+                  ? "bg-white text-blue-600 shadow-sm"
+                  : "text-gray-600 hover:text-gray-800"
+              }`}
+            >
+              Settings
+            </button>
           </div>
         </div>
 
-        {isLoading ? (
-          <div className="text-center py-8">
-            <div className="text-gray-500">Loading notifications...</div>
-          </div>
-        ) : notifications.length === 0 ? (
-          <div className="text-center py-8">
-            <div className="text-gray-500">
-              {showUnreadOnly
-                ? "No unread notifications"
-                : "No notifications yet"}
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {notifications.map((notification: Notification) => (
-              <div
-                key={notification._id}
-                className={`bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer transition-colors ${
-                  notification.read
-                    ? "opacity-75"
-                    : "border-blue-300 bg-blue-50"
-                }`}
-                onClick={() => handleNotificationClick(notification)}
-              >
-                <div className="flex items-start space-x-3">
-                  <div
-                    className={`flex-shrink-0 ${
-                      notification.read ? "text-gray-400" : "text-blue-600"
-                    }`}
-                  >
-                    {getNotificationIcon(notification.type, notification.icon)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3
-                          className={`text-sm font-medium ${
-                            notification.read
-                              ? "text-gray-900"
-                              : "text-blue-900"
-                          }`}
-                        >
-                          {notification.title}
-                        </h3>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {notification.message}
-                        </p>
-                        {notification.tripId && (
-                          <p className="text-xs text-gray-500 mt-1">
-                            Trip: {notification.tripId.destination},{" "}
-                            {notification.tripId.country}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-xs text-gray-500">
-                          {formatTimestamp(notification.createdAt)}
-                        </span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteNotification(notification._id);
-                          }}
-                          className="text-red-600 hover:text-red-800 text-sm"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {totalPages > 1 && (
-          <div className="flex justify-center space-x-2 mt-6">
-            <button
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <span className="px-3 py-1 text-sm text-gray-600">
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              onClick={() =>
-                setCurrentPage(Math.min(totalPages, currentPage + 1))
-              }
-              disabled={currentPage === totalPages}
-              className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-        )}
+        {activeTab === "notifications"
+          ? renderNotificationsTab()
+          : renderSettingsTab()}
       </main>
     </div>
   );

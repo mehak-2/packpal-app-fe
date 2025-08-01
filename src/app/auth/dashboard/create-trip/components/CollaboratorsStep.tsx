@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import React, { useState, useEffect, useCallback } from "react";
 import { API_CONFIG } from "../../../../../config/api";
 
@@ -255,7 +256,7 @@ const CollaboratorsStep = ({ tripId }: CollaboratorsStepProps) => {
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
                       {invitation.inviteeId.avatar ? (
-                        <img
+                        <Image
                           src={invitation.inviteeId.avatar}
                           alt={invitation.inviteeId.name}
                           className="w-10 h-10 rounded-full object-cover"
@@ -319,7 +320,7 @@ const CollaboratorsStep = ({ tripId }: CollaboratorsStepProps) => {
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-white font-medium text-xs">
                         {user.avatar ? (
-                          <img
+                          <Image
                             src={user.avatar}
                             alt={user.name}
                             className="w-8 h-8 rounded-full object-cover"

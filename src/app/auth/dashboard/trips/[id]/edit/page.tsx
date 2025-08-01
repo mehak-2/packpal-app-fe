@@ -246,7 +246,7 @@ const EditTripPage = () => {
       <div className="max-w-4xl mx-auto">
         <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-gray-600 rounded-lg flex items-center justify-center mx-auto mb-4">
               <svg
                 className="w-8 h-8 text-white"
                 fill="none"
@@ -261,7 +261,7 @@ const EditTripPage = () => {
                 />
               </svg>
             </div>
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-gray-600 bg-clip-text text-transparent">
               Edit Trip
             </h2>
             <p className="mt-2 text-gray-600 font-medium">
@@ -277,7 +277,7 @@ const EditTripPage = () => {
                     <div
                       className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold transition-all duration-300 ${
                         currentStep >= step.id
-                          ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg"
+                          ? "bg-gradient-to-r from-blue-500 to-gray-600 text-white shadow-lg"
                           : "bg-gray-200 text-gray-500"
                       }`}
                     >
@@ -299,7 +299,7 @@ const EditTripPage = () => {
                     <div
                       className={`flex-1 h-1 mx-4 rounded-full transition-all duration-300 ${
                         currentStep > step.id
-                          ? "bg-gradient-to-r from-blue-500 to-purple-600"
+                          ? "bg-gradient-to-r from-blue-500 to-gray-600"
                           : "bg-gray-200"
                       }`}
                     />
@@ -310,7 +310,7 @@ const EditTripPage = () => {
 
             <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-100">
               <div className="flex items-center">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-4">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-gray-600 rounded-lg flex items-center justify-center mr-4">
                   <span className="text-white text-lg">
                     {steps[currentStep - 1].icon}
                   </span>
@@ -359,7 +359,7 @@ const EditTripPage = () => {
               <button
                 onClick={handleNext}
                 disabled={!canProceed()}
-                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 border border-transparent rounded-xl text-sm font-semibold text-white hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-gray-600 border border-transparent rounded-xl text-sm font-semibold text-white hover:from-blue-700 hover:to-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
                 <div className="flex items-center">
                   Next
@@ -382,7 +382,7 @@ const EditTripPage = () => {
               <button
                 onClick={handleSubmit}
                 disabled={isLoading || !canProceed()}
-                className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 border border-transparent rounded-xl text-sm font-semibold text-white hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                className="px-6 py-3 bg-gradient-to-r from-green-600 to-gray-600 border border-transparent rounded-xl text-sm font-semibold text-white hover:from-green-700 hover:to-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
                 {isLoading ? (
                   <div className="flex items-center">

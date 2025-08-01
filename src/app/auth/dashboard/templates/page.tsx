@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import jsPDF from "jspdf";
 import {
   useGetTemplatesQuery,
   useDeleteTemplateMutation,
@@ -78,6 +79,92 @@ const TemplatesPage = () => {
     });
   };
 
+  const generatePDF = (template: Template) => {
+    const doc = new jsPDF();
+
+    doc.setFontSize(20);
+    doc.setTextColor(59, 130, 246);
+    doc.text("PackPal - Packing List Template", 20, 20);
+
+    doc.setFontSize(14);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`${template.name}`, 20, 35);
+    doc.text(
+      `Destination: ${template.destination}, ${template.country}`,
+      20,
+      45
+    );
+
+    let yPosition = 60;
+
+    Object.entries(template.packingList).forEach(([category, items]) => {
+      if (items.length > 0) {
+        doc.setFontSize(12);
+        doc.setTextColor(59, 130, 246);
+        doc.text(
+          category.charAt(0).toUpperCase() + category.slice(1),
+          20,
+          yPosition
+        );
+        yPosition += 8;
+
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+
+        items.forEach(
+          (item: { name: string; quantity?: number; packed?: boolean }) => {
+            const itemText = item.quantity
+              ? `${item.name} (${item.quantity})`
+              : item.name;
+            if (yPosition > 280) {
+              doc.addPage();
+              yPosition = 20;
+            }
+            doc.text(`• ${itemText}`, 25, yPosition);
+            yPosition += 6;
+          }
+        );
+
+        yPosition += 5;
+      }
+    });
+
+    doc.save(`${template.name}-packing-list.pdf`);
+  };
+
+  const [copyStatus, setCopyStatus] = useState<{ [key: string]: boolean }>({});
+
+  const handleCopy = async (template: Template) => {
+    try {
+      const packingListText = Object.entries(template.packingList)
+        .map(([category, items]) => {
+          if (items.length === 0) return null;
+          const categoryTitle =
+            category.charAt(0).toUpperCase() + category.slice(1);
+          const itemsList = items
+            .map(
+              (item: { name: string; quantity?: number; packed?: boolean }) =>
+                item.quantity
+                  ? `• ${item.name} (${item.quantity})`
+                  : `• ${item.name}`
+            )
+            .join("\n");
+          return `${categoryTitle}:\n${itemsList}`;
+        })
+        .filter(Boolean)
+        .join("\n\n");
+
+      await navigator.clipboard.writeText(packingListText);
+
+      setCopyStatus((prev) => ({ ...prev, [template._id]: true }));
+      setTimeout(() => {
+        setCopyStatus((prev) => ({ ...prev, [template._id]: false }));
+      }, 2000);
+    } catch (error) {
+      console.error("Failed to copy to clipboard:", error);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center">
@@ -114,8 +201,8 @@ const TemplatesPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-green-600/5"></div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-grey-50">
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-grey-600/5"></div>
 
       <div className="relative z-10">
         <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
@@ -126,20 +213,8 @@ const TemplatesPage = () => {
                   onClick={() => router.push("/auth/dashboard")}
                   className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
                 >
-                  <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-green-600 rounded-xl flex items-center justify-center">
-                    <svg
-                      className="w-5 h-5 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 19l-7-7 7-7"
-                      />
-                    </svg>
+                  <div className="w-10 h-10 bg-gradient-to-r from-gray-600 to-gray-800 rounded-xl flex items-center justify-center">
+                    <span className="text-white font-bold text-xl">P</span>
                   </div>
                   <span className="text-2xl font-bold gradient-text">
                     PackPal
@@ -147,7 +222,7 @@ const TemplatesPage = () => {
                 </button>
               </div>
               <div className="flex items-center space-x-3">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-gray-600 bg-clip-text text-transparent">
                   Templates
                 </h1>
               </div>
@@ -167,7 +242,7 @@ const TemplatesPage = () => {
 
           {templates.length === 0 ? (
             <div className="text-center py-16">
-              <div className="w-24 h-24 bg-gradient-to-r from-blue-100 to-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <div className="w-24 h-24 bg-gradient-to-r from-blue-100 to-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <svg
                   className="w-12 h-12 text-blue-600"
                   fill="none"
@@ -191,7 +266,7 @@ const TemplatesPage = () => {
               </p>
               <button
                 onClick={() => router.push("/auth/dashboard")}
-                className="px-8 py-4 bg-gradient-to-r from-blue-600 to-green-600 text-white rounded-xl hover:from-blue-700 hover:to-green-700 transition-all duration-200 shadow-lg text-lg font-semibold"
+                className="px-8 py-4 bg-gradient-to-r from-blue-600 to-gray-600 text-white rounded-xl hover:from-blue-700 hover:to-gray-700 transition-all duration-200 shadow-lg text-lg font-semibold"
               >
                 Go to Trips
               </button>
@@ -268,7 +343,7 @@ const TemplatesPage = () => {
                           items.length > 0 && (
                             <span
                               key={category}
-                              className="px-3 py-1 bg-gradient-to-r from-blue-100 to-green-100 text-blue-800 rounded-full text-xs font-medium border border-blue-200"
+                              className="px-3 py-1 bg-gradient-to-r from-blue-100 to-gray-100 text-blue-800 rounded-full text-xs font-medium border border-blue-200"
                             >
                               {category.charAt(0).toUpperCase() +
                                 category.slice(1)}{" "}
@@ -281,37 +356,58 @@ const TemplatesPage = () => {
 
                   <div className="flex space-x-3">
                     <button
-                      onClick={() => {
-                        const packingListData = JSON.stringify(
-                          template.packingList,
-                          null,
-                          2
-                        );
-                        const blob = new Blob([packingListData], {
-                          type: "application/json",
-                        });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement("a");
-                        a.href = url;
-                        a.download = `${template.name}-packing-list.json`;
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(url);
-                      }}
-                      className="flex-1 px-4 py-3 text-sm bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium"
+                      onClick={() => generatePDF(template)}
+                      className="flex-1 px-4 py-3 text-sm bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium flex items-center justify-center"
                     >
-                      Export
+                      <svg
+                        className="w-4 h-4 mr-2"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0014.414 6L10 1.586A2 2 0 008 1.586L3.586 6A2 2 0 002 7.414V4a2 2 0 012-2z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      Export PDF
                     </button>
                     <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(
-                          JSON.stringify(template.packingList, null, 2)
-                        );
-                      }}
-                      className="flex-1 px-4 py-3 text-sm bg-gradient-to-r from-blue-600 to-green-600 text-white rounded-xl hover:from-blue-700 hover:to-green-700 transition-all duration-200 font-medium shadow-lg"
+                      onClick={() => handleCopy(template)}
+                      className={`flex-1 px-4 py-3 text-sm rounded-xl transition-all duration-200 font-medium flex items-center justify-center ${
+                        copyStatus[template._id]
+                          ? "bg-green-500 text-white"
+                          : "bg-gradient-to-r from-blue-600 to-gray-600 text-white hover:from-blue-700 hover:to-gray-700 shadow-lg"
+                      }`}
                     >
-                      Copy
+                      {copyStatus[template._id] ? (
+                        <>
+                          <svg
+                            className="w-4 h-4 mr-2"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <svg
+                            className="w-4 h-4 mr-2"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                            <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                          </svg>
+                          Copy
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>

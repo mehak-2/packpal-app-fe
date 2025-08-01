@@ -20,8 +20,13 @@ const DeclineInvitationPage = ({
       try {
         const token = localStorage.getItem("token");
         if (!token) {
-          setMessage("Please log in to decline this invitation");
+          setMessage(
+            "Please log in to decline this invitation. You'll be redirected to the login page."
+          );
           setIsLoading(false);
+          setTimeout(() => {
+            router.push(`/auth/login?redirect=/auth/invitations/${id}/decline`);
+          }, 3000);
           return;
         }
 

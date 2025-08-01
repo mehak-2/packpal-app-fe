@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   useGetTripByIdQuery,
   useUpdatePackingListMutation,
-  useRegeneratePackingListMutation,
+  // useRegeneratePackingListMutation,
   useCreateTemplateMutation,
   tripsApi,
 } from "@/redux/slices/api/trips/trips";
@@ -132,10 +132,8 @@ const PackingListPage = ({ params }: { params: Promise<{ id: string }> }) => {
     error,
     refetch,
   } = useGetTripByIdQuery(tripId!, { skip: !tripId });
-  const [updatePackingList, { isLoading: isUpdatingPackingList }] =
-    useUpdatePackingListMutation();
-  const [regeneratePackingList, { isLoading: isRegenerating }] =
-    useRegeneratePackingListMutation();
+  const [updatePackingList] = useUpdatePackingListMutation();
+  // const [regeneratePackingList] = useRegeneratePackingListMutation();
   const [createTemplate] = useCreateTemplateMutation();
 
   const trip =
@@ -143,12 +141,12 @@ const PackingListPage = ({ params }: { params: Promise<{ id: string }> }) => {
       ? (tripData as { data: Trip }).data
       : undefined;
 
-  useEffect(() => {
-    if (trip?.packingList && !localPackingList) {
-      console.log("Initializing local packing list from trip data");
-      setLocalPackingList(trip.packingList);
-    }
-  }, [trip?.packingList]);
+  // useEffect(() => {
+  //   if (trip?.packingList && !localPackingList) {
+  //     console.log("Initializing local packing list from trip data");
+  //     setLocalPackingList(trip.packingList);
+  //   }
+  // }, [trip?.packingList]);
 
   useEffect(() => {
     if (trip?.packingList && localPackingList === null) {
@@ -170,13 +168,13 @@ const PackingListPage = ({ params }: { params: Promise<{ id: string }> }) => {
     return `${formatDate(startDate)} - ${formatDate(endDate)}`;
   };
 
-  const handleRegeneratePackingList = async () => {
-    try {
-      await regeneratePackingList(tripId!).unwrap();
-    } catch (error) {
-      console.error("Failed to regenerate packing list:", error);
-    }
-  };
+  // const handleRegeneratePackingList = async () => {
+  //   try {
+  //     await regeneratePackingList(tripId!).unwrap();
+  //   } catch (error) {
+  //     console.error("Failed to regenerate packing list:", error);
+  //   }
+  // };
 
   const handleAddCustomItem = async () => {
     if (!newItem.name || !newItem.category) return;
@@ -441,25 +439,25 @@ const PackingListPage = ({ params }: { params: Promise<{ id: string }> }) => {
     setShowEditItemModal(true);
   };
 
-  const getPackedCount = () => {
-    if (!localPackingList) return 0;
-    let count = 0;
-    Object.values(localPackingList).forEach((items) => {
-      (items as unknown as Array<{ packed: boolean }>).forEach((item) => {
-        if (item.packed) count++;
-      });
-    });
-    return count;
-  };
+  // const getPackedCount = () => {
+  //   if (!localPackingList) return 0;
+  //   let count = 0;
+  //   Object.values(localPackingList).forEach((items) => {
+  //     (items as unknown as Array<{ packed: boolean }>).forEach((item) => {
+  //       if (item.packed) count++;
+  //     });
+  //   });
+  //   return count;
+  // };
 
-  const getTotalCount = () => {
-    if (!localPackingList) return 0;
-    let count = 0;
-    Object.values(localPackingList).forEach((items) => {
-      count += (items as unknown as Array<unknown>).length;
-    });
-    return count;
-  };
+  // const getTotalCount = () => {
+  //   if (!localPackingList) return 0;
+  //   let count = 0;
+  //   Object.values(localPackingList).forEach((items) => {
+  //     count += (items as unknown as Array<unknown>).length;
+  //   });
+  //   return count;
+  // };
 
   if (isLoading) {
     return (
@@ -526,10 +524,10 @@ const PackingListPage = ({ params }: { params: Promise<{ id: string }> }) => {
     );
   }
 
-  const packedCount = getPackedCount();
-  const totalCount = getTotalCount();
-  const progressPercentage =
-    totalCount > 0 ? (packedCount / totalCount) * 100 : 0;
+  // const packedCount = getPackedCount();
+  // const totalCount = getTotalCount();
+  // const progressPercentage =
+  //   totalCount > 0 ? (packedCount / totalCount) * 100 : 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">

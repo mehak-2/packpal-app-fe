@@ -124,9 +124,7 @@ const MultiDestinationSelector: React.FC<MultiDestinationSelectorProps> = ({
     onDestinationsChange(updatedDestinations);
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const customStyles = {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     control: (provided: any, state: { isFocused: boolean }) => ({
       ...provided,
       borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
@@ -135,7 +133,6 @@ const MultiDestinationSelector: React.FC<MultiDestinationSelectorProps> = ({
         borderColor: "#3b82f6",
       },
     }),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     option: (
       provided: any,
       state: { isSelected: boolean; isFocused: boolean }
@@ -151,18 +148,15 @@ const MultiDestinationSelector: React.FC<MultiDestinationSelectorProps> = ({
         backgroundColor: state.isSelected ? "#3b82f6" : "#f3f4f6",
       },
     }),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     multiValue: (provided: any) => ({
       ...provided,
       backgroundColor: "#3b82f6",
       color: "white",
     }),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     multiValueLabel: (provided: any) => ({
       ...provided,
       color: "white",
     }),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     multiValueRemove: (provided: any) => ({
       ...provided,
       color: "white",
@@ -171,7 +165,6 @@ const MultiDestinationSelector: React.FC<MultiDestinationSelectorProps> = ({
         color: "white",
       },
     }),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     menu: (provided: any) => ({
       ...provided,
       zIndex: 9999,

@@ -178,8 +178,8 @@ const OnboardingPage = () => {
                   onClick={() => updateFormData("preferredClimate", climate)}
                   className={`px-4 py-3 border-2 rounded-xl font-medium transition-all duration-300 ${
                     formData.preferredClimate === climate
-                      ? "border-blue-600 bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 shadow-lg transform scale-105"
-                      : "border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:shadow-md"
+                      ? "border-gray-600 bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 shadow-lg transform scale-105"
+                      : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:shadow-md"
                   }`}
                 >
                   {climate}
@@ -226,7 +226,7 @@ const OnboardingPage = () => {
                   onClick={() => toggleActivity(activity.title)}
                   className={`relative inline-flex h-8 w-14 items-center rounded-full transition-all duration-300 ${
                     formData.preferredActivities.includes(activity.title)
-                      ? "bg-gradient-to-r from-blue-600 to-green-600"
+                      ? "bg-gradient-to-r from-gray-600 to-gray-600"
                       : "bg-gray-200"
                   }`}
                 >
@@ -250,10 +250,10 @@ const OnboardingPage = () => {
         {currentStepData.options?.map((option) => (
           <label
             key={option}
-            className="card cursor-pointer hover:shadow-xl transition-all duration-300 group"
+            className=" backdrop-blur-sm rounded-2xl   p-6 cursor-pointer transition-all duration-300 "
           >
             <div className="flex items-center justify-between">
-              <span className="text-lg text-gray-800 font-medium">
+              <span className="text-lg text-gray-800 font-medium group-hover:text-gray-900 transition-colors">
                 {option}
               </span>
               <input
@@ -267,7 +267,7 @@ const OnboardingPage = () => {
                 onChange={(e) =>
                   updateFormData(currentStepData.field, e.target.value)
                 }
-                className="w-5 h-5 text-blue-600 focus:ring-blue-500"
+                className="w-5 h-5 text-blue-600 focus:ring-blue-500 focus:ring-2 focus:ring-offset-2"
               />
             </div>
           </label>
@@ -297,14 +297,14 @@ const OnboardingPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 relative">
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-green-600/10 pointer-events-none"></div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 relative">
+      <div className="absolute inset-0 bg-gradient-to-r from-gray-600/10 to-gray-600/10 pointer-events-none"></div>
 
       <div className="relative z-10 min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="w-full max-w-2xl mx-auto space-y-8">
           <div className="text-center mb-8">
             <div className="flex items-center justify-center space-x-2 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-green-600 rounded-xl flex items-center justify-center animate-pulse-slow">
+              <div className="w-12 h-12 bg-gradient-to-r from-gray-600 to-gray-600 rounded-xl flex items-center justify-center animate-pulse-slow">
                 <span className="text-white font-bold text-2xl">P</span>
               </div>
               <span className="text-3xl font-bold gradient-text">PackPal</span>
@@ -317,7 +317,7 @@ const OnboardingPage = () => {
                     <div
                       className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300 ${
                         currentStep > step.id
-                          ? "bg-gradient-to-r from-blue-600 to-green-600 text-white"
+                          ? "bg-gradient-to-r from-gray-600 to-gray-600 text-white"
                           : currentStep === step.id
                           ? "bg-blue-600 text-white shadow-lg"
                           : "bg-gray-200 text-gray-600"
@@ -329,7 +329,7 @@ const OnboardingPage = () => {
                       <div
                         className={`w-16 h-1 mx-2 transition-all duration-300 ${
                           currentStep > step.id
-                            ? "bg-gradient-to-r from-blue-600 to-green-600"
+                            ? "bg-gradient-to-r from-gray-600 to-gray-600"
                             : "bg-gray-200"
                         }`}
                       />

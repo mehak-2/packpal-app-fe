@@ -60,7 +60,7 @@ export const tripsApi = createApi({
       query: ({ id, packingList }) => ({
         url: `/trips/${id}/packing-list`,
         method: "PUT",
-        body: packingList,
+        body: { packingList },
       }),
       async onQueryStarted({ id }, { dispatch, queryFulfilled }) {
         try {
@@ -73,16 +73,20 @@ export const tripsApi = createApi({
       },
     }),
     regeneratePackingList: builder.mutation<unknown, string>({
-      query: (id) => ({
+      query: (id: string) => ({
         url: `/trips/${id}/regenerate-packing-list`,
         method: "POST",
       }),
-      async onQueryStarted(id, { dispatch, queryFulfilled }) {
+      async onQueryStarted(id: string, { dispatch, queryFulfilled }) {
         try {
           await queryFulfilled;
-          dispatch(tripsApi.util.invalidateTags([{ type: "Trips", id }]));
           dispatch(
-            tripsApi.util.invalidateTags([{ type: "Trips", id: "LIST" }])
+            tripsApi.util.invalidateTags([{ type: "Trips" as const, id }])
+          );
+          dispatch(
+            tripsApi.util.invalidateTags([
+              { type: "Trips" as const, id: "LIST" },
+            ])
           );
         } catch {}
       },

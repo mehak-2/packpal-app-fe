@@ -11,43 +11,43 @@ export default function About() {
     setIsLoaded(true);
   }, []);
 
-  const team = [
-    {
-      name: "Sarah Chen",
-      role: "CEO & Co-Founder",
-      bio: "Former travel industry executive with 15+ years experience in digital transformation and customer experience.",
-      avatar: "SC",
-    },
-    {
-      name: "Marcus Rodriguez",
-      role: "CTO & Co-Founder",
-      bio: "AI/ML expert with a passion for building intelligent systems that solve real-world problems.",
-      avatar: "MR",
-    },
-    {
-      name: "Emily Watson",
-      role: "Head of Product",
-      bio: "Product strategist focused on creating intuitive user experiences that delight travelers worldwide.",
-      avatar: "EW",
-    },
-    {
-      name: "David Kim",
-      role: "Lead Engineer",
-      bio: "Full-stack developer specializing in scalable architectures and real-time collaboration features.",
-      avatar: "DK",
-    },
-  ];
+  // const team = [
+  //   {
+  //     name: "Sarah Chen",
+  //     role: "CEO & Co-Founder",
+  //     bio: "Former travel industry executive with 15+ years experience in digital transformation and customer experience.",
+  //     avatar: "SC",
+  //   },
+  //   {
+  //     name: "Marcus Rodriguez",
+  //     role: "CTO & Co-Founder",
+  //     bio: "AI/ML expert with a passion for building intelligent systems that solve real-world problems.",
+  //     avatar: "MR",
+  //   },
+  //   {
+  //     name: "Emily Watson",
+  //     role: "Head of Product",
+  //     bio: "Product strategist focused on creating intuitive user experiences that delight travelers worldwide.",
+  //     avatar: "EW",
+  //   },
+  //   {
+  //     name: "David Kim",
+  //     role: "Lead Engineer",
+  //     bio: "Full-stack developer specializing in scalable architectures and real-time collaboration features.",
+  //     avatar: "DK",
+  //   },
+  // ];
 
-  const stats = [
-    { number: "50K+", label: "Happy Travelers" },
-    { number: "150+", label: "Countries Covered" },
-    { number: "1M+", label: "Trips Planned" },
-    { number: "99.9%", label: "Uptime" },
-  ];
+  // const stats = [
+  //   { number: "50K+", label: "Happy Travelers" },
+  //   { number: "150+", label: "Countries Covered" },
+  //   { number: "1M+", label: "Trips Planned" },
+  //   { number: "99.9%", label: "Uptime" },
+  // ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-green-600/10"></div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-grey-50">
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-grey-600/10"></div>
 
       <div className="relative z-10">
         <nav className="flex justify-between items-center p-6 max-w-7xl mx-auto">
@@ -315,7 +315,7 @@ export default function About() {
               </Link>
               <Link
                 href="/contact"
-                className="btn-secondary text-lg px-8 py-4 text-white"
+                className="btn-primary text-lg px-8 py-4 text-white"
               >
                 Get in Touch
               </Link>

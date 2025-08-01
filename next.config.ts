@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ["@reduxjs/toolkit", "react-redux"],
   },
   images: {
-    domains: [],
+    domains: ["images.unsplash.com"],
     formats: ["image/webp", "image/avif"],
   },
   headers: async () => {
